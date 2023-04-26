@@ -2,16 +2,12 @@ import 'package:assets_management/blocs/booking/booking_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../models/booking/booking.dart';
+import '../../repositories/booking_repository.dart';
 import '../../repositories/firestore_repository.dart';
 import 'booking_state.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
-  final _repository = FirestoreRepository();
-
-  // BookingBloc() : super(const BookingState()) {
-  //   on<LoadBooking>(_onLoadBooking);
-  //   on<LoadBookingCompleted>(_onLoadCompletion);
-  // }
+  final _repository = BookingRepository();
 
   BookingBloc() : super(BookingInitial()) {
     on<LoadBooking>(_onLoadBooking);
@@ -22,7 +18,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     await emit.forEach<List<Booking>>(
-      _repository.selectDocs('booking').map(
+      _repository.selectAll(datetime: event.createdAt).map(
         (data) {
           return data.map((doc) => Booking.fromDocumentSnapshot(doc)).toList();
         },

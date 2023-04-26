@@ -45,7 +45,7 @@ class _MyBookingState extends State<MyBooking> {
       initialIndex: _selectedIndex,
       length: datetime.length,
       child: BlocProvider(
-        create: (ctx) => BookingBloc()..add(const LoadBooking()),
+        create: (context) => BookingBloc()..add(LoadBooking(DateTime.now())),
         child: Scaffold(
           appBar: AppBar(
             centerTitle: true,
@@ -54,11 +54,16 @@ class _MyBookingState extends State<MyBooking> {
               child: TabBar(
                 isScrollable: true,
                 indicatorColor: Colors.white,
-                onTap: (i) => _tabSelect,
                 tabs: datetime.map(
                   (e) {
                     return Tab(
-                      child: Text(e),
+                      child: FilledButton(
+                        onPressed: () {
+                          context.read<BookingBloc>().add(LoadBooking(
+                              DateTime.now().subtract(Duration(days: 2))));
+                        },
+                        child: Text(e),
+                      ),
                     );
                   },
                 ).toList(),
@@ -97,10 +102,6 @@ class _MyBookingState extends State<MyBooking> {
         ),
       ),
     );
-  }
-
-  _tabSelect(int index) {
-    _selectedIndex = index;
   }
 
   _showMyDialog(String bookingId) async {

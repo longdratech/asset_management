@@ -1,18 +1,28 @@
-import 'package:assets_management/models/booking/booking.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'firestore_repository.dart';
 
 class BookingRepository {
-  final FirestoreRepository _firestore;
+  final _firestore = FirestoreRepository();
+  static final BookingRepository _singleton = BookingRepository._internal();
 
-  const BookingRepository({required FirestoreRepository firestore})
-      : _firestore = firestore;
+  factory BookingRepository() {
+    return _singleton;
+  }
 
-  Stream<List<Booking>> selectAll() {
-    return _firestore.selectDocs('booking').map(
-      (data) {
-        return data.map((doc) => Booking.fromDocumentSnapshot(doc)).toList();
-      },
-    );
+  BookingRepository._internal();
+
+  Stream<List<DocumentSnapshot>> selectAll({
+    required DateTime datetime,
+  }) {
+    return _firestore
+        .collection('booking')
+        .where('createdAt',
+            isGreaterThan:
+                Timestamp.fromDate(datetime.subtract(Duration(days: 1))))
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs;
+    });
   }
 }

@@ -9,7 +9,9 @@ abstract class BookingEvent extends Equatable {
 }
 
 class LoadBooking extends BookingEvent {
-  const LoadBooking();
+  const LoadBooking(this.createdAt);
+
+  final DateTime createdAt;
 }
 
 class LoadBookingCompleted extends BookingEvent {

@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreRepository {
-  // const FirestoreRepository();
   static final FirestoreRepository _singleton = FirestoreRepository._internal();
 
   factory FirestoreRepository() {
@@ -10,14 +9,8 @@ class FirestoreRepository {
 
   FirestoreRepository._internal();
 
-  Stream<List<DocumentSnapshot>> selectDocs(String collectionPath) {
-    return FirebaseFirestore.instance
-        .collection(collectionPath)
-        .snapshots()
-        .map(
-      (snapshot) {
-        return snapshot.docs;
-      },
-    );
+  CollectionReference<Map<String, dynamic>> collection(String collectionPath) {
+    return FirebaseFirestore.instance.collection(collectionPath);
   }
 }
+
