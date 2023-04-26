@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "518829323508",
+    "project_id": "canon-assets",
+    "storage_bucket": "canon-assets.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:518829323508:android:7b5a0eaa1dcddfcc951aa1",
+        "android_client_info": {
+          "package_name": "com.dratech.assets_management"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "518829323508-mcq0bg73f5pmb2akd0eco5s1t8ghm906.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZgn1JJw7Zxhvu1-WBnvMUoF3hDlxSKRY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "518829323508-mcq0bg73f5pmb2akd0eco5s1t8ghm906.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "518829323508-dfhhr8a10i84gr912d43sfaklmuvof73.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.kamranhccp.genscan.qrgenscan"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

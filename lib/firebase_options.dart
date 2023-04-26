@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -28,10 +25,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
@@ -49,9 +43,19 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyBI_h4v-9yGBpM18mjQMD-H1qMY6VCwOz8',
+    appId: '1:518829323508:web:24ea2f992fdd616b951aa1',
+    messagingSenderId: '518829323508',
+    projectId: 'canon-assets',
+    authDomain: 'canon-assets.firebaseapp.com',
+    storageBucket: 'canon-assets.appspot.com',
+    measurementId: 'G-7W3SLSTD6D',
+  );
+
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDZgn1JJw7Zxhvu1-WBnvMUoF3hDlxSKRY',
-    appId: '1:518829323508:android:33805cd05a46c6fe951aa1',
+    appId: '1:518829323508:android:7b5a0eaa1dcddfcc951aa1',
     messagingSenderId: '518829323508',
     projectId: 'canon-assets',
     storageBucket: 'canon-assets.appspot.com',
@@ -59,11 +63,21 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCZh8L03iuNWQYiMRiQEx18CmToollaa4c',
-    appId: '1:518829323508:ios:f28687e73d2745b0951aa1',
+    appId: '1:518829323508:ios:d962ac4bb3d5b9d7951aa1',
     messagingSenderId: '518829323508',
     projectId: 'canon-assets',
     storageBucket: 'canon-assets.appspot.com',
-    iosClientId: '518829323508-dfhhr8a10i84gr912d43sfaklmuvof73.apps.googleusercontent.com',
-    iosBundleId: 'com.dratech.assets_management',
+    iosClientId: '518829323508-pr8q4gqp2inod891m1u9tek08kq967ti.apps.googleusercontent.com',
+    iosBundleId: 'com.example.assetsManagement',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCZh8L03iuNWQYiMRiQEx18CmToollaa4c',
+    appId: '1:518829323508:ios:d962ac4bb3d5b9d7951aa1',
+    messagingSenderId: '518829323508',
+    projectId: 'canon-assets',
+    storageBucket: 'canon-assets.appspot.com',
+    iosClientId: '518829323508-pr8q4gqp2inod891m1u9tek08kq967ti.apps.googleusercontent.com',
+    iosBundleId: 'com.example.assetsManagement',
   );
 }
