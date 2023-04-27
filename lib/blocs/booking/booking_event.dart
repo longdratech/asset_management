@@ -27,4 +27,17 @@ class AddBooking extends BookingEvent {}
 
 class UpdateBooking extends BookingEvent {}
 
+class CheckingBooking extends BookingEvent {
+  const CheckingBooking({
+    required this.createdAt,
+    required this.assetCode,
+  });
+
+  final DateTime createdAt;
+  final String assetCode;
+
+  @override
+  List<Object> get props => [createdAt, assetCode];
+}
+
 class RemoveBooking extends BookingEvent {}

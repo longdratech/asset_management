@@ -6,14 +6,14 @@ import '../json_map.dart';
 @JsonSerializable()
 class Asset {
   const Asset({
-    required this.id,
+    // required this.id,
     required this.assetCode,
     this.modelName,
     this.serialNumber,
     required this.type,
   });
 
-  final String id;
+  // final String id;
   final String assetCode;
   final String? modelName;
   final String? serialNumber;
@@ -21,7 +21,7 @@ class Asset {
 
   factory Asset.fromFirestore(JsonMap data) {
     return Asset(
-      id: data['id'],
+      // id: data['id'],
       assetCode: data['assetCode'],
       modelName: data['modelName'],
       serialNumber: data['serialNumber'],
@@ -31,7 +31,7 @@ class Asset {
 
   JsonMap toFirestore() {
     return {
-      "id": id,
+      // "id": id,
       "assetCode": assetCode,
       "modelName": modelName,
       if (serialNumber != null) "serialNumber": serialNumber,

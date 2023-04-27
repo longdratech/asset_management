@@ -12,5 +12,17 @@ class FirestoreRepository {
   CollectionReference<Map<String, dynamic>> collection(String collectionPath) {
     return FirebaseFirestore.instance.collection(collectionPath);
   }
-}
 
+  Future<DocumentReference> addDocument(
+    String collectionPath,
+    dynamic data,
+  ) async {
+    return await FirebaseFirestore.instance
+        .collection(collectionPath)
+        .add(data);
+  }
+
+  // CollectionReference<Map<String, dynamic>> getDocument(String collectionPath) async {
+  //   return FirebaseFirestore.instance.collection(collectionPath).limit(1);
+  // }
+}

@@ -3,6 +3,7 @@ import 'package:assets_management/blocs/booking/booking_state.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
@@ -20,7 +21,8 @@ class MyBooking extends StatefulWidget {
 class _MyBookingState extends State<MyBooking> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  final FirestoreRepository repository = FirestoreRepository();
+  final repository = FirestoreRepository();
+  final _bloc = BookingBloc();
 
   final datetime = List.generate(10, (index) {
     return DateTime.now()
@@ -45,7 +47,7 @@ class _MyBookingState extends State<MyBooking> {
       initialIndex: _selectedIndex,
       length: datetime.length,
       child: BlocProvider(
-        create: (context) => BookingBloc()..add(LoadBooking(DateTime.now())),
+        create: (context) => _bloc..add(LoadBooking(DateTime.now())),
         child: Scaffold(
           appBar: AppBar(
             centerTitle: true,
@@ -54,16 +56,14 @@ class _MyBookingState extends State<MyBooking> {
               child: TabBar(
                 isScrollable: true,
                 indicatorColor: Colors.white,
+                onTap: (index) {
+                  _selectedIndex = index;
+                  _bloc.add(LoadBooking(_current(index)));
+                },
                 tabs: datetime.map(
                   (e) {
                     return Tab(
-                      child: FilledButton(
-                        onPressed: () {
-                          context.read<BookingBloc>().add(LoadBooking(
-                              DateTime.now().subtract(Duration(days: 2))));
-                        },
-                        child: Text(e),
-                      ),
+                      child: Text(e),
                     );
                   },
                 ).toList(),
@@ -98,6 +98,32 @@ class _MyBookingState extends State<MyBooking> {
                 return Text('Fail');
               }
             },
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () async {
+              try {
+                // String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+                //   '#ff6666',
+                //   'Cancel',
+                //   true,
+                //   ScanMode.BARCODE,
+                // );
+                // if (int.parse(barcodeScanRes) != -1) {
+                //   // _bloc.add(event);
+                // }
+                _bloc.add(
+                  CheckingBooking(
+                    createdAt: DateFormat('dd/MM/yyyy').parse(
+                      datetime[_selectedIndex],
+                    ),
+                    assetCode: "OTHER-042832",
+                  ),
+                );
+              } on PlatformException {
+                print('failure scan');
+              }
+            },
+            child: Icon(Icons.add),
           ),
         ),
       ),
@@ -182,5 +208,9 @@ class _MyBookingState extends State<MyBooking> {
         );
       },
     );
+  }
+
+  DateTime _current(index) {
+    return DateFormat('dd/MM/yyyy').parse(datetime[index]);
   }
 }
