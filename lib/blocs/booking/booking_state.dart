@@ -19,6 +19,15 @@ class BookingLoaded extends BookingState {
   List<Object> get props => [booking];
 }
 
+class BookingStatus extends BookingState {
+  final String status;
+
+  const BookingStatus(this.status);
+
+  @override
+  List<Object> get props => [status];
+}
+
 class CheckBookingSuccess extends BookingState {}
 
 class BookingFailure extends BookingState {}

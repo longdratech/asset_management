@@ -27,14 +27,16 @@ class AddBooking extends BookingEvent {}
 
 class UpdateBooking extends BookingEvent {}
 
-class CheckingBooking extends BookingEvent {
-  const CheckingBooking({
+class ReqBooking extends BookingEvent {
+  const ReqBooking({
     required this.createdAt,
     required this.assetCode,
+    this.name,
   });
 
   final DateTime createdAt;
   final String assetCode;
+  final String? name;
 
   @override
   List<Object> get props => [createdAt, assetCode];

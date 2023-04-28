@@ -5,6 +5,7 @@ import 'package:assets_management/models/asset/asset_model.dart';
 class Booking {
   final String id;
   final String asset;
+  final String? assetCode;
   final DateTime createdAt;
   final String employee;
   final DateTime? endedAt;
@@ -12,6 +13,7 @@ class Booking {
   Booking({
     required this.id,
     required this.asset,
+    this.assetCode,
     required this.createdAt,
     required this.employee,
     this.endedAt,

@@ -2,26 +2,28 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 import '../json_map.dart';
+import 'package:uuid/uuid.dart';
 
 @JsonSerializable()
 class Asset {
   const Asset({
-    // required this.id,
+    this.id,
     required this.assetCode,
     this.modelName,
     this.serialNumber,
     required this.type,
   });
 
-  // final String id;
+  final String? id;
   final String assetCode;
   final String? modelName;
   final String? serialNumber;
   final String type;
 
-  factory Asset.fromFirestore(JsonMap data) {
+  factory Asset.fromFirestore(DocumentSnapshot snapshot) {
+    final data = snapshot.data() as JsonMap;
     return Asset(
-      // id: data['id'],
+      id: snapshot.id,
       assetCode: data['assetCode'],
       modelName: data['modelName'],
       serialNumber: data['serialNumber'],
@@ -31,7 +33,7 @@ class Asset {
 
   JsonMap toFirestore() {
     return {
-      // "id": id,
+      "id": id ?? const Uuid().v4(),
       "assetCode": assetCode,
       "modelName": modelName,
       if (serialNumber != null) "serialNumber": serialNumber,
