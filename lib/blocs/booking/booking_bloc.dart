@@ -38,7 +38,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     );
   }
 
-  Future<List<Booking>> onCheckingBooking(ReqBooking event) async {
+  Future<List<Booking>> getBooking(ReqBooking event) async {
     final start = DateTime(event.createdAt.year, event.createdAt.month,
         event.createdAt.day, 0, 0, 0);
     final end = DateTime(event.createdAt.year, event.createdAt.month,
@@ -62,7 +62,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     ReqBooking event,
     Emitter<BookingState> emit,
   ) async {
-    final data = await onCheckingBooking(event);
+    final data = await getBooking(event);
 
     final assetRef = await _assetRepository.getAsset(
       LoadAsset(assetCode: event.assetCode),
