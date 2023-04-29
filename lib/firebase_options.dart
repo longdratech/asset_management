@@ -68,7 +68,7 @@ class DefaultFirebaseOptions {
     projectId: 'canon-assets',
     storageBucket: 'canon-assets.appspot.com',
     iosClientId: '518829323508-pr8q4gqp2inod891m1u9tek08kq967ti.apps.googleusercontent.com',
-    iosBundleId: 'com.example.assetsManagement',
+    iosBundleId: 'com.dratech.assets_management',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -78,6 +78,6 @@ class DefaultFirebaseOptions {
     projectId: 'canon-assets',
     storageBucket: 'canon-assets.appspot.com',
     iosClientId: '518829323508-pr8q4gqp2inod891m1u9tek08kq967ti.apps.googleusercontent.com',
-    iosBundleId: 'com.example.assetsManagement',
+    iosBundleId: 'com.dratech.assets_management',
   );
 }
