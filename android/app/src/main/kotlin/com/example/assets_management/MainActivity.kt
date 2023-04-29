@@ -1,4 +1,4 @@
-package com.example.assets_management
+package com.dratech.assetment
 
 import io.flutter.embedding.android.FlutterActivity
 

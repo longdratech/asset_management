@@ -1,8 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.assets_management">
+    package="com.dratech.assetment">
     <uses-permission android:name="android.permission.CAMERA" />
    <application
-        android:label="assets_management"
+        android:label="assetment"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

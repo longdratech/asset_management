@@ -13,7 +13,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.assetsManagement</string>
+	<string>com.dratech.assetment</string>
 	<key>PROJECT_ID</key>
 	<string>canon-assets</string>
 	<key>STORAGE_BUCKET</key>
