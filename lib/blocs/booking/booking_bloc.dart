@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:assets_management/blocs/asset/asset_event.dart';
 import 'package:assets_management/blocs/booking/booking_event.dart';
-import 'package:assets_management/models/asset.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

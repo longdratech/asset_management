@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 
 import '../../models/asset.dart';
-import '../../models/asset.dart';
 
 class AssetState extends Equatable {
   const AssetState();
@@ -18,6 +17,9 @@ class AssetLoaded extends AssetState {
   final List<Asset> assets;
 
   const AssetLoaded(this.assets);
+
+  @override
+  List<Object> get props => [assets];
 }
 
 class AssetByIdLoaded extends AssetState {

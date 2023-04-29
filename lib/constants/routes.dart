@@ -18,7 +18,7 @@ class Routes {
       case home:
         return MaterialPageRoute(builder: (_) => const ProfileScreen());
       case myAssets:
-        return MaterialPageRoute(builder: (_) => const AssetScreen());
+        return MaterialPageRoute(builder: (_) => AssetScreen());
       case myAssetDetail:
         {
           final args = settings.arguments as AssetDetailArguments;

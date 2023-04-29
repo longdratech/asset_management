@@ -1,3 +1,4 @@
+import 'package:assets_management/models/member.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class MemberEvent extends Equatable {

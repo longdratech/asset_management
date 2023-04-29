@@ -58,10 +58,10 @@ class _MyHomePageState extends State<MyHomePage> {
     ];
   }
 
-  static const List<Widget> _screens = <Widget>[
-    MyBooking(),
+  static final List<Widget> _screens = <Widget>[
+    const MyBooking(),
     AssetScreen(),
-    ProfileScreen(),
+    const ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {

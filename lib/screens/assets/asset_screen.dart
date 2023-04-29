@@ -8,14 +8,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'add_asset.dart';
 import 'asset_detail.dart';
 
-class AssetScreen extends StatefulWidget {
-  const AssetScreen({super.key});
+class AssetScreen extends StatelessWidget {
+  AssetScreen({super.key});
 
-  @override
-  State<AssetScreen> createState() => _AssetScreenState();
-}
-
-class _AssetScreenState extends State<AssetScreen> {
   final bloc = AssetBloc();
 
   @override
@@ -29,37 +24,39 @@ class _AssetScreenState extends State<AssetScreen> {
         ),
         centerTitle: true,
       ),
-      body: BlocProvider(
-        create: (context) => bloc..add(const LoadAsset()),
-        child: RefreshIndicator(
-          onRefresh: () {
-            bloc.add(const LoadAsset());
-            return Future<void>.delayed(const Duration(seconds: 1));
-          },
-          child: Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(20),
-            child: BlocBuilder<AssetBloc, AssetState>(
-              builder: (context, state) {
-                if (state is AssetLoading) {
-                  return const Text('Loading...');
-                } else if (state is AssetLoaded) {
-                  return ListView(
-                    children: state.assets.map<Widget>((asset) {
-                      return ListTile(
-                        title: Text(asset.assetCode),
-                        subtitle: Text(asset.modelName ?? "N/A"),
-                        trailing: Text(asset.type),
-                        onTap: () {
-                          // Navigator.pushNamed(context, myAssetDetail);
-                        },
-                      );
-                    }).toList(),
-                  );
-                }
-                return const Text('Đã có lỗi xảy ra');
-              },
-            ),
+      body: RefreshIndicator(
+        onRefresh: () {
+          bloc.add(const LoadAsset());
+          return Future<void>.delayed(const Duration(seconds: 1));
+        },
+        child: Container(
+          color: Colors.white,
+          padding: const EdgeInsets.all(20),
+          child: BlocBuilder<AssetBloc, AssetState>(
+            bloc: bloc..add(const LoadAsset()),
+            builder: (context, state) {
+              print("state loaded");
+              if (state is AssetLoading) {
+                return const Center(child: Text('Loading...'));
+              } else if (state is AssetLoaded) {
+                final assets = state.assets;
+                return assets.isNotEmpty
+                    ? ListView(
+                        children: assets.map<Widget>((asset) {
+                          return ListTile(
+                            title: Text(asset.assetCode),
+                            subtitle: Text(asset.modelName ?? "N/A"),
+                            trailing: Text(asset.type),
+                            onTap: () {
+                              // Navigator.pushNamed(context, myAssetDetail);
+                            },
+                          );
+                        }).toList(),
+                      )
+                    : const Center(child: Text('No data!'));
+              }
+              return const Center(child: Text('Đã có lỗi xảy ra'));
+            },
           ),
         ),
       ),
@@ -73,7 +70,8 @@ class _AssetScreenState extends State<AssetScreen> {
           // );
           const barcode = "OTHER-0428310";
 
-          final asset = await bloc.getAsset(const LoadAsset(assetCode: barcode));
+          final asset =
+              await bloc.getAsset(const LoadAsset(assetCode: barcode));
           final data = (await asset?.get())?.data();
           if (data == null) {
             Navigator.of(context)

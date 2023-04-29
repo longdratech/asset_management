@@ -1,24 +1,20 @@
-import 'package:assets_management/blocs/%20members/member_bloc.dart';
-import 'package:assets_management/blocs/%20members/member_event.dart';
 import 'package:assets_management/blocs/asset/asset_bloc.dart';
 import 'package:assets_management/blocs/asset/asset_event.dart';
 import 'package:assets_management/blocs/asset/asset_state.dart';
 import 'package:assets_management/blocs/booking/booking_event.dart';
 import 'package:assets_management/blocs/booking/booking_state.dart';
+import 'package:assets_management/screens/booking/choose_member.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-import '../../blocs/ members/member_state.dart';
 import '../../blocs/booking/booking_bloc.dart';
-import '../../models/asset.dart';
 import '../../models/json_map.dart';
-import '../../models/member.dart';
 import '../../repositories/firestore_repository.dart';
+import 'choose_member.dart';
 
 class MyBooking extends StatefulWidget {
   const MyBooking({super.key});
@@ -34,7 +30,6 @@ class _MyBookingState extends State<MyBooking> {
 
   final repository = FirestoreRepository();
   final _bloc = BookingBloc();
-  final _memberBloc = MemberBloc();
   final _assetBloc = AssetBloc();
 
   final datetime = List.generate(10, (index) {
@@ -65,7 +60,7 @@ class _MyBookingState extends State<MyBooking> {
           appBar: AppBar(
             centerTitle: true,
             title: PreferredSize(
-              preferredSize: Size.fromHeight(30),
+              preferredSize: const Size.fromHeight(30),
               child: TabBar(
                 isScrollable: true,
                 indicatorColor: Colors.white,
@@ -74,7 +69,7 @@ class _MyBookingState extends State<MyBooking> {
                   _bloc.add(LoadBooking(_current(index)));
                 },
                 tabs: datetime.map(
-                  (e) {
+                      (e) {
                     return Tab(
                       child: Text(e),
                     );
@@ -108,13 +103,13 @@ class _MyBookingState extends State<MyBooking> {
                               children: <Widget>[
                                 BlocBuilder<AssetBloc, AssetState>(
                                   bloc: _assetBloc
-                                    ..add(LoadAssetById(data[i].asset.id)),
+                                    ..add(
+                                      LoadAssetById(data[i].asset.id),
+                                    ),
                                   builder: (context, state) {
                                     if (state is AssetByIdLoaded) {
                                       final assetCode = state.asset.assetCode;
-                                      return Text(
-                                        'Asset code: $assetCode',
-                                      );
+                                      return Text('Asset code: $assetCode');
                                     }
                                     return const Text('Loading...');
                                   },
@@ -122,7 +117,12 @@ class _MyBookingState extends State<MyBooking> {
                                 Text("Thời gian mượn: ${data[i].createdAt}"),
                                 Text("Người mượn:  ${data[i].employee}"),
                                 Text(
-                                    "Trạng thái:  ${data[i].endedAt == null ? 'Đang mượn' : 'Đã trả (${DateFormat('dd/MM/yyyy - HH:mm').format(data[i].endedAt!)})'}"),
+                                  "Trạng thái:  ${data[i].endedAt == null
+                                      ? 'Đang mượn'
+                                      : 'Đã trả (${DateFormat(
+                                      'dd/MM/yyyy - HH:mm').format(
+                                      data[i].endedAt!)})'}",
+                                ),
                               ],
                             ),
                           );
@@ -139,14 +139,14 @@ class _MyBookingState extends State<MyBooking> {
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
               try {
-                String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-                  '#ff6666',
-                  'Cancel',
-                  true,
-                  ScanMode.QR,
-                );
+                // String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+                //   '#ff6666',
+                //   'Cancel',
+                //   true,
+                //   ScanMode.QR,
+                // );
 
-                final assetCode = barcodeScanRes;
+                final assetCode = "OTHER-0428310";
                 final onCheck = await _bloc.onCheckingBooking(ReqBooking(
                   createdAt: _current(_selectedIndex),
                   assetCode: assetCode,
@@ -155,67 +155,7 @@ class _MyBookingState extends State<MyBooking> {
                   await showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return BlocProvider(
-                        create: (context) => _memberBloc..add(LoadMember()),
-                        child: AlertDialog(
-                          title: const Text('Xác nhận muợn device'),
-                          content: BlocBuilder<MemberBloc, MemberState>(
-                            builder: (context, state) {
-                              if (state is MemberLoaded) {
-                                dropdownValue = state.members.first.name;
-
-                                return DropdownButton<String>(
-                                  value: dropdownValue,
-                                  icon: const Icon(Icons.arrow_downward),
-                                  elevation: 16,
-                                  style:
-                                      const TextStyle(color: Colors.deepPurple),
-                                  underline: Container(
-                                    height: 2,
-                                    color: Colors.deepPurpleAccent,
-                                  ),
-                                  onChanged: (String? value) {
-                                    setState(() {
-                                      dropdownValue = value!;
-                                    });
-                                    print("member select ${value}");
-                                  },
-                                  items: state.members
-                                      .map<DropdownMenuItem<String>>(
-                                          (Member member) {
-                                    return DropdownMenuItem(
-                                      value: member.name,
-                                      child: Text(member.name),
-                                    );
-                                  }).toList(),
-                                );
-                              }
-                              return Text('Đã có lỗi xảy ra!');
-                            },
-                          ),
-                          actions: <Widget>[
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, 'Cancel'),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              child: const Text('Xác nhận'),
-                              onPressed: () {
-                                _bloc.add(
-                                  ReqBooking(
-                                    createdAt: DateFormat('dd/MM/yyyy').parse(
-                                      datetime[_selectedIndex],
-                                    ),
-                                    assetCode: assetCode,
-                                    name: dropdownValue,
-                                  ),
-                                );
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          ],
-                        ),
-                      );
+                      return ChooseMember();
                     },
                   );
                 } else {
@@ -250,7 +190,7 @@ class _MyBookingState extends State<MyBooking> {
           content: SingleChildScrollView(
             child: StreamBuilder(
               stream:
-                  firestore.collection('booking').doc(bookingId).snapshots(),
+              firestore.collection('booking').doc(bookingId).snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Text("Loading");
