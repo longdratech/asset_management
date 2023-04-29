@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:assets_management/screens/assets/asset_screen.dart';
-import 'package:assets_management/screens/home_page.dart';
+import 'package:assets_management/screens/profile/profile_screen.dart';
 import 'package:assets_management/screens/booking/my_booking.dart';
 
 import 'constants/routes.dart';
@@ -45,23 +45,23 @@ class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
 
   List<NavigationDestination> _destinations(BuildContext context) {
-    return [
-      NavigationDestination(icon: const Icon(Icons.home), label: 'Home'),
+    return const [
       NavigationDestination(
-        icon: const Icon(Icons.manage_history),
-        label: 'My Booking',
+        icon: Icon(Icons.manage_history),
+        label: 'Booking',
       ),
       NavigationDestination(
-        icon: const Icon(Icons.web_asset),
+        icon: Icon(Icons.web_asset),
         label: 'Canon\'s assets',
       ),
+      NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
     ];
   }
 
   static const List<Widget> _screens = <Widget>[
-    HomeScreen(),
     MyBooking(),
-    AssetScreen()
+    AssetScreen(),
+    ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {

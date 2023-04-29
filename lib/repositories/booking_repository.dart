@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../models/booking/booking.dart';
+import '../models/booking.dart';
 import 'firestore_repository.dart';
 
 class BookingRepository {
@@ -14,7 +14,6 @@ class BookingRepository {
 
   BookingRepository._internal();
 
-  //
   Query<Map<String, dynamic>> collection() {
     return _firestore.collection(path);
   }

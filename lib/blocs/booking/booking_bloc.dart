@@ -1,27 +1,30 @@
 import 'dart:async';
 
+import 'package:assets_management/blocs/asset/asset_event.dart';
 import 'package:assets_management/blocs/booking/booking_event.dart';
-import 'package:assets_management/models/asset/asset_model.dart';
-import 'package:assets_management/models/json_map.dart';
+import 'package:assets_management/models/asset.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../models/booking/booking.dart';
+import '../../models/booking.dart';
+import '../../repositories/asset_repository.dart';
 import '../../repositories/booking_repository.dart';
 import 'booking_state.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final _repository = BookingRepository();
+  final _assetRepository = AssetRepository();
 
   BookingBloc() : super(BookingInitial()) {
-    on<LoadBooking>(_onLoadBooking);
-    on<ReqBooking>(_onReqBooking);
+    on<LoadBooking>(_onLoad);
+    on<ReqBooking>(_onReq);
   }
 
-  Future<void> _onLoadBooking(
+  Future<void> _onLoad(
     LoadBooking event,
     Emitter<BookingState> emit,
   ) async {
+    emit(BookingLoading());
     await emit.forEach<List<Booking>>(
       _repository.selectAll(datetime: event.createdAt).map(
         (data) {
@@ -36,38 +39,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     );
   }
 
-  Future<DocumentReference<Map<String, dynamic>>> getReference(
-    ReqBooking event,
-  ) async {
-    final ref = await FirebaseFirestore.instance
-        .collection('assets')
-        .where("assetCode", isEqualTo: event.assetCode)
-        .limit(1)
-        .get();
-    return FirebaseFirestore.instance
-        .collection('assets')
-        .doc(ref.docs.single.id);
-  }
-
-  Future<Asset> getAsset(String assetRef) async {
-    final data =
-        await FirebaseFirestore.instance.doc(assetRef).get();
-    return Asset.fromFirestore(data);
-  }
-
   Future<List<Booking>> onCheckingBooking(ReqBooking event) async {
     final start = DateTime(event.createdAt.year, event.createdAt.month,
         event.createdAt.day, 0, 0, 0);
     final end = DateTime(event.createdAt.year, event.createdAt.month,
         event.createdAt.day, 23, 59, 59);
 
-    final ref = await FirebaseFirestore.instance
-        .collection('assets')
-        .where("assetCode", isEqualTo: event.assetCode)
-        .limit(1)
-        .get();
-    final DocumentReference assetRef =
-        FirebaseFirestore.instance.collection('assets').doc(ref.docs.single.id);
+    final assetRef = await _assetRepository.getAsset(
+      LoadAsset(assetCode: event.assetCode),
+    );
 
     final data = await FirebaseFirestore.instance
         .collection('booking')
@@ -79,13 +59,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     return data.docs.map((e) => Booking.fromDocumentSnapshot(e)).toList();
   }
 
-  Future<void> _onReqBooking(
+  Future<void> _onReq(
     ReqBooking event,
     Emitter<BookingState> emit,
   ) async {
     final data = await onCheckingBooking(event);
 
-    final assetRef = await getReference(event);
+    final assetRef = await _assetRepository.getAsset(
+      LoadAsset(assetCode: event.assetCode),
+    );
 
     if (data.isNotEmpty) {
       final bookings = data;

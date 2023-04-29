@@ -1,7 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:assets_management/blocs/asset/asset_bloc.dart';
+import 'package:assets_management/blocs/asset/asset_event.dart';
+import 'package:assets_management/blocs/asset/asset_state.dart';
+import 'package:assets_management/constants/routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../constants/routes.dart';
+import 'add_asset.dart';
+import 'asset_detail.dart';
 
 class AssetScreen extends StatefulWidget {
   const AssetScreen({super.key});
@@ -11,47 +16,74 @@ class AssetScreen extends StatefulWidget {
 }
 
 class _AssetScreenState extends State<AssetScreen> {
-  String qrCodeResult = "Not Yet Scanned";
-
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final bloc = AssetBloc();
 
   @override
   Widget build(BuildContext context) {
-    CollectionReference assets = firestore.collection('assets');
-
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.white,
         title: const Text(
-          'QR Code Scanner',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          'Tài sản',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
-      body: StreamBuilder(
-        stream: assets.snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-          if (snapshot.hasError) {
-            return Text('Something went wrong');
+      body: BlocProvider(
+        create: (context) => bloc..add(const LoadAsset()),
+        child: RefreshIndicator(
+          onRefresh: () {
+            bloc.add(const LoadAsset());
+            return Future<void>.delayed(const Duration(seconds: 1));
+          },
+          child: Container(
+            color: Colors.white,
+            padding: const EdgeInsets.all(20),
+            child: BlocBuilder<AssetBloc, AssetState>(
+              builder: (context, state) {
+                if (state is AssetLoading) {
+                  return const Text('Loading...');
+                } else if (state is AssetLoaded) {
+                  return ListView(
+                    children: state.assets.map<Widget>((asset) {
+                      return ListTile(
+                        title: Text(asset.assetCode),
+                        subtitle: Text(asset.modelName ?? "N/A"),
+                        trailing: Text(asset.type),
+                        onTap: () {
+                          // Navigator.pushNamed(context, myAssetDetail);
+                        },
+                      );
+                    }).toList(),
+                  );
+                }
+                return const Text('Đã có lỗi xảy ra');
+              },
+            ),
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          // String barcode = await FlutterBarcodeScanner.scanBarcode(
+          //   '#ff6666',
+          //   'Cancel',
+          //   true,
+          //   ScanMode.QR,
+          // );
+          const barcode = "OTHER-0428310";
+
+          final asset = await bloc.getAsset(const LoadAsset(assetCode: barcode));
+          final data = (await asset?.get())?.data();
+          if (data == null) {
+            Navigator.of(context)
+                .pushNamed(addAsset, arguments: AddAssetArguments(barcode));
+          } else {
+            Navigator.of(context).pushNamed(myAssetDetail,
+                arguments: AssetDetailArguments(barcode));
           }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Text("Loading");
-          }
-          return ListView(
-            children: snapshot.data!.docs.map<Widget>((
-                DocumentSnapshot document) {
-              Map<String, dynamic> data =
-              document.data()! as Map<String, dynamic>;
-              return ListTile(
-                title: Text(data['assetCode']),
-                subtitle: Text(data['serialNumber']),
-                onTap: () {
-                  Navigator.pushNamed(context, myAssetDetail);
-                },
-              );
-            }).toList(),
-          );
         },
+        child: const Icon(Icons.add),
       ),
     );
   }

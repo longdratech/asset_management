@@ -1,10 +1,9 @@
 import 'package:assets_management/models/json_map.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:assets_management/models/asset/asset_model.dart';
 
 class Booking {
   final String id;
-  final String asset;
+  final DocumentReference asset;
   final String? assetCode;
   final DateTime createdAt;
   final String employee;
@@ -23,7 +22,7 @@ class Booking {
     final data = snapshot.data() as JsonMap;
     return Booking(
       id: snapshot.id,
-      asset: (data['asset'] as DocumentReference).path,
+      asset: data['asset'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       employee: data['employee'],
       endedAt: data['endedAt'] != null

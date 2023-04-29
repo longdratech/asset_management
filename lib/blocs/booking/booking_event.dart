@@ -1,4 +1,4 @@
-import 'package:assets_management/models/booking/booking.dart';
+import 'package:assets_management/models/booking.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class BookingEvent extends Equatable {

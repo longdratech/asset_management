@@ -1,5 +1,8 @@
 import 'package:assets_management/blocs/%20members/member_bloc.dart';
 import 'package:assets_management/blocs/%20members/member_event.dart';
+import 'package:assets_management/blocs/asset/asset_bloc.dart';
+import 'package:assets_management/blocs/asset/asset_event.dart';
+import 'package:assets_management/blocs/asset/asset_state.dart';
 import 'package:assets_management/blocs/booking/booking_event.dart';
 import 'package:assets_management/blocs/booking/booking_state.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -12,7 +15,7 @@ import 'package:intl/intl.dart';
 
 import '../../blocs/ members/member_state.dart';
 import '../../blocs/booking/booking_bloc.dart';
-import '../../models/asset/asset_model.dart';
+import '../../models/asset.dart';
 import '../../models/json_map.dart';
 import '../../models/member.dart';
 import '../../repositories/firestore_repository.dart';
@@ -32,6 +35,7 @@ class _MyBookingState extends State<MyBooking> {
   final repository = FirestoreRepository();
   final _bloc = BookingBloc();
   final _memberBloc = MemberBloc();
+  final _assetBloc = AssetBloc();
 
   final datetime = List.generate(10, (index) {
     return DateTime.now()
@@ -79,51 +83,58 @@ class _MyBookingState extends State<MyBooking> {
               ),
             ),
           ),
-          body: BlocBuilder<BookingBloc, BookingState>(
-            builder: (context, state) {
-              if (state is BookingInitial) {
-                return Text('Loading...');
-              } else if (state is BookingLoaded) {
-                final data = state.booking;
-                return Container(
-                  padding: const EdgeInsets.all(20),
-                  child: ListView.builder(
-                    itemCount: data.length,
-                    itemBuilder: (BuildContext context, int i) {
-                      return TextButton(
-                        onPressed: () => _showMyDialog(data[i].id),
-                        child: ListBody(
-                          children: <Widget>[
-                            FutureBuilder<Asset>(
-                              future: _bloc.getAsset(data[i].asset),
-                              builder: (BuildContext context,
-                                  AsyncSnapshot<Asset> snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return Text('Loading...');
-                                } else if (snapshot.connectionState ==
-                                    ConnectionState.done) {
-                                  return Text(
-                                      'Asset code: ${snapshot.data!.assetCode}');
-                                } else {
-                                  return Text('Đã có lỗi xảy ra!');
-                                }
-                              },
-                            ),
-                            Text("Thời gian mượn: ${data[i].createdAt}"),
-                            Text("Người mượn:  ${data[i].employee}"),
-                            Text(
-                                "Trạng thái:  ${data[i].endedAt == null ? 'Đang mượn' : 'Đã trả (${DateFormat('dd/MM/yyyy - HH:mm').format(data[i].endedAt!)})'}"),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                );
-              } else {
-                return Text('Fail');
-              }
+          body: RefreshIndicator(
+            onRefresh: () {
+              _bloc.add(LoadBooking(_current(_selectedIndex)));
+              return Future<void>.delayed(const Duration(seconds: 0));
             },
+            child: BlocBuilder<BookingBloc, BookingState>(
+              builder: (context, state) {
+                if (state is BookingLoading) {
+                  return const Center(child: Text('Loading...'));
+                } else if (state is BookingLoaded) {
+                  final data = state.booking;
+                  if (data.isEmpty) {
+                    return const Center(child: Text('No data!'));
+                  } else {
+                    return Container(
+                      padding: const EdgeInsets.all(20),
+                      child: ListView.builder(
+                        itemCount: data.length,
+                        itemBuilder: (BuildContext context, int i) {
+                          return TextButton(
+                            onPressed: () => _showMyDialog(data[i].id),
+                            child: ListBody(
+                              children: <Widget>[
+                                BlocBuilder<AssetBloc, AssetState>(
+                                  bloc: _assetBloc
+                                    ..add(LoadAssetById(data[i].asset.id)),
+                                  builder: (context, state) {
+                                    if (state is AssetByIdLoaded) {
+                                      final assetCode = state.asset.assetCode;
+                                      return Text(
+                                        'Asset code: $assetCode',
+                                      );
+                                    }
+                                    return const Text('Loading...');
+                                  },
+                                ),
+                                Text("Thời gian mượn: ${data[i].createdAt}"),
+                                Text("Người mượn:  ${data[i].employee}"),
+                                Text(
+                                    "Trạng thái:  ${data[i].endedAt == null ? 'Đang mượn' : 'Đã trả (${DateFormat('dd/MM/yyyy - HH:mm').format(data[i].endedAt!)})'}"),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }
+                } else {
+                  return Text('Fail');
+                }
+              },
+            ),
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () async {

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:assets_management/models/booking/booking.dart';
+import 'package:assets_management/models/booking.dart';
 
 class BookingState extends Equatable {
   const BookingState();
@@ -10,6 +10,8 @@ class BookingState extends Equatable {
 
 class BookingInitial extends BookingState {}
 
+class BookingLoading extends BookingState {}
+
 class BookingLoaded extends BookingState {
   final List<Booking> booking;
 
@@ -19,15 +21,5 @@ class BookingLoaded extends BookingState {
   List<Object> get props => [booking];
 }
 
-class BookingStatus extends BookingState {
-  final String status;
-
-  const BookingStatus(this.status);
-
-  @override
-  List<Object> get props => [status];
-}
-
-class CheckBookingSuccess extends BookingState {}
 
 class BookingFailure extends BookingState {}

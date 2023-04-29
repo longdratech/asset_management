@@ -1,10 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:json_annotation/json_annotation.dart';
 
-import '../json_map.dart';
+import 'json_map.dart';
 import 'package:uuid/uuid.dart';
 
-@JsonSerializable()
 class Asset {
   const Asset({
     this.id,

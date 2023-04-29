@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
 
 class AssetDetailArguments {
-  final String id;
+  final String assetCode;
 
-  AssetDetailArguments(this.id);
+  AssetDetailArguments(this.assetCode);
 }
 
-class AssetDetailScreen extends StatefulWidget {
-  // final String? id;
+class AssetDetailScreen extends StatelessWidget {
+  final AssetDetailArguments args;
 
-  const AssetDetailScreen({Key? key}) : super(key: key);
+  const AssetDetailScreen(this.args, {super.key});
 
-  @override
-  State<AssetDetailScreen> createState() => _AssetDetailScreenState();
-}
-
-class _AssetDetailScreenState extends State<AssetDetailScreen> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          args.assetCode,
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: Center(
+        child: Text("Asset already exists. Asset detail is developing"),
+      ),
+    );
   }
 }
