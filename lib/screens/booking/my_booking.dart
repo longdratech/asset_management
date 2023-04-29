@@ -3,6 +3,7 @@ import 'package:assets_management/blocs/asset/asset_event.dart';
 import 'package:assets_management/blocs/asset/asset_state.dart';
 import 'package:assets_management/blocs/booking/booking_event.dart';
 import 'package:assets_management/blocs/booking/booking_state.dart';
+import 'package:assets_management/constants/routes.dart';
 import 'package:assets_management/models/booking.dart';
 import 'package:assets_management/screens/booking/choose_member.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -16,6 +17,7 @@ import 'package:intl/intl.dart';
 import '../../blocs/booking/booking_bloc.dart';
 import '../../models/json_map.dart';
 import '../../repositories/firestore_repository.dart';
+import '../assets/add_asset.dart';
 
 class MyBooking extends StatefulWidget {
   const MyBooking({super.key});
@@ -185,19 +187,33 @@ class _MyBookingState extends State<MyBooking> {
                   ScanMode.QR,
                 );
                 final assetCode = barcodeScanRes;
+                String? member;
 
-                final onCheck = await _bloc.onCheckingBooking(ReqBooking(
+                final bookings = await _bloc.getBooking(ReqBooking(
                   createdAt: _current(_selectedIndex),
                   assetCode: assetCode,
                 ));
-                final member = onCheck.isEmpty
-                    ? await showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return ChooseMember();
-                        },
-                      )
-                    : null;
+
+                if (bookings.isEmpty) {
+                  final asset = await _assetBloc.getAsset(
+                    LoadAsset(assetCode: assetCode),
+                  );
+
+                  if (asset == null) {
+                    await Navigator.pushNamed(
+                      context,
+                      addAsset,
+                      arguments: AddAssetArguments(assetCode),
+                    );
+                  }
+
+                  member = await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return ChooseMember();
+                    },
+                  );
+                }
                 _bloc.add(
                   ReqBooking(
                     createdAt: DateFormat('dd/MM/yyyy').parse(
