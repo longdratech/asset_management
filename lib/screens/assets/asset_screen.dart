@@ -3,6 +3,7 @@ import 'package:assets_management/blocs/asset/asset_event.dart';
 import 'package:assets_management/blocs/asset/asset_state.dart';
 import 'package:assets_management/constants/routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'add_asset.dart';
@@ -35,7 +36,6 @@ class AssetScreen extends StatelessWidget {
           child: BlocBuilder<AssetBloc, AssetState>(
             bloc: bloc..add(const LoadAsset()),
             builder: (context, state) {
-              print("state loaded");
               if (state is AssetLoading) {
                 return const Center(child: Text('Loading...'));
               } else if (state is AssetLoaded) {
@@ -62,23 +62,22 @@ class AssetScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          // String barcode = await FlutterBarcodeScanner.scanBarcode(
-          //   '#ff6666',
-          //   'Cancel',
-          //   true,
-          //   ScanMode.QR,
-          // );
-          const barcode = "OTHER-0428310";
+          String assetCode = await FlutterBarcodeScanner.scanBarcode(
+            '#ff6666',
+            'Cancel',
+            true,
+            ScanMode.QR,
+          );
 
-          final asset =
-              await bloc.getAsset(const LoadAsset(assetCode: barcode));
+          final asset = await bloc.getAsset(LoadAsset(assetCode: assetCode));
           final data = (await asset?.get())?.data();
+
           if (data == null) {
             Navigator.of(context)
-                .pushNamed(addAsset, arguments: AddAssetArguments(barcode));
+                .pushNamed(addAsset, arguments: AddAssetArguments(assetCode));
           } else {
             Navigator.of(context).pushNamed(myAssetDetail,
-                arguments: AssetDetailArguments(barcode));
+                arguments: AssetDetailArguments(assetCode));
           }
         },
         child: const Icon(Icons.add),

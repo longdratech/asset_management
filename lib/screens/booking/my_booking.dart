@@ -3,18 +3,19 @@ import 'package:assets_management/blocs/asset/asset_event.dart';
 import 'package:assets_management/blocs/asset/asset_state.dart';
 import 'package:assets_management/blocs/booking/booking_event.dart';
 import 'package:assets_management/blocs/booking/booking_state.dart';
+import 'package:assets_management/models/booking.dart';
 import 'package:assets_management/screens/booking/choose_member.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../blocs/booking/booking_bloc.dart';
 import '../../models/json_map.dart';
 import '../../repositories/firestore_repository.dart';
-import 'choose_member.dart';
 
 class MyBooking extends StatefulWidget {
   const MyBooking({super.key});
@@ -25,8 +26,6 @@ class MyBooking extends StatefulWidget {
 
 class _MyBookingState extends State<MyBooking> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-  String dropdownValue = '';
 
   final repository = FirestoreRepository();
   final _bloc = BookingBloc();
@@ -69,7 +68,7 @@ class _MyBookingState extends State<MyBooking> {
                   _bloc.add(LoadBooking(_current(index)));
                 },
                 tabs: datetime.map(
-                      (e) {
+                  (e) {
                     return Tab(
                       child: Text(e),
                     );
@@ -97,33 +96,69 @@ class _MyBookingState extends State<MyBooking> {
                       child: ListView.builder(
                         itemCount: data.length,
                         itemBuilder: (BuildContext context, int i) {
-                          return TextButton(
-                            onPressed: () => _showMyDialog(data[i].id),
-                            child: ListBody(
-                              children: <Widget>[
-                                BlocBuilder<AssetBloc, AssetState>(
-                                  bloc: _assetBloc
-                                    ..add(
-                                      LoadAssetById(data[i].asset.id),
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: GestureDetector(
+                              onTap: () {
+                                _showMyDialog(data[i]);
+                              },
+                              child: ListBody(
+                                children: <Widget>[
+                                  BlocBuilder<AssetBloc, AssetState>(
+                                    bloc: _assetBloc
+                                      ..add(
+                                        LoadAssetById(data[i].asset.id),
+                                      ),
+                                    builder: (context, state) {
+                                      if (state is AssetByIdLoaded) {
+                                        final assetCode = state.asset.assetCode;
+                                        return Text.rich(
+                                          TextSpan(
+                                            text: 'Asset code: ',
+                                            children: [
+                                              TextSpan(
+                                                text: assetCode,
+                                                style: const TextStyle(
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }
+                                      return const Text('Loading...');
+                                    },
+                                  ),
+                                  Text.rich(
+                                    TextSpan(
+                                      text: 'Trạng thái: ',
+                                      children: [
+                                        data[i].endedAt == null
+                                            ? const TextSpan(
+                                                text: 'Đang mượn',
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              )
+                                            : TextSpan(
+                                                text:
+                                                    'Đã trả (${DateFormat('dd/MM/yyyy - HH:mm').format(data[i].endedAt!)})',
+                                                style: const TextStyle(
+                                                  color: Colors.green,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                      ],
                                     ),
-                                  builder: (context, state) {
-                                    if (state is AssetByIdLoaded) {
-                                      final assetCode = state.asset.assetCode;
-                                      return Text('Asset code: $assetCode');
-                                    }
-                                    return const Text('Loading...');
-                                  },
-                                ),
-                                Text("Thời gian mượn: ${data[i].createdAt}"),
-                                Text("Người mượn:  ${data[i].employee}"),
-                                Text(
-                                  "Trạng thái:  ${data[i].endedAt == null
-                                      ? 'Đang mượn'
-                                      : 'Đã trả (${DateFormat(
-                                      'dd/MM/yyyy - HH:mm').format(
-                                      data[i].endedAt!)})'}",
-                                ),
-                              ],
+                                  ),
+                                  Text(
+                                    "Thời gian mượn: ${DateFormat('dd/MM/yyyy - HH:mm').format(data[i].createdAt)}",
+                                  ),
+                                  Text("Người mượn:  ${data[i].employee}"),
+                                ],
+                              ),
                             ),
                           );
                         },
@@ -131,7 +166,11 @@ class _MyBookingState extends State<MyBooking> {
                     );
                   }
                 } else {
-                  return Text('Fail');
+                  return const Center(
+                    child: Text(
+                      'Đã có lỗi xảy ra. Vui lòng liên hệ LongTH20!',
+                    ),
+                  );
                 }
               },
             ),
@@ -139,36 +178,35 @@ class _MyBookingState extends State<MyBooking> {
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
               try {
-                // String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-                //   '#ff6666',
-                //   'Cancel',
-                //   true,
-                //   ScanMode.QR,
-                // );
+                String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+                  '#ff6666',
+                  'Cancel',
+                  true,
+                  ScanMode.QR,
+                );
+                final assetCode = barcodeScanRes;
 
-                final assetCode = "OTHER-0428310";
                 final onCheck = await _bloc.onCheckingBooking(ReqBooking(
                   createdAt: _current(_selectedIndex),
                   assetCode: assetCode,
                 ));
-                if (onCheck.isEmpty) {
-                  await showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return ChooseMember();
-                    },
-                  );
-                } else {
-                  _bloc.add(
-                    ReqBooking(
-                      createdAt: DateFormat('dd/MM/yyyy').parse(
-                        datetime[_selectedIndex],
-                      ),
-                      assetCode: assetCode,
-                      name: dropdownValue,
+                final member = onCheck.isEmpty
+                    ? await showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return ChooseMember();
+                        },
+                      )
+                    : null;
+                _bloc.add(
+                  ReqBooking(
+                    createdAt: DateFormat('dd/MM/yyyy').parse(
+                      datetime[_selectedIndex],
                     ),
-                  );
-                }
+                    assetCode: assetCode,
+                    name: member,
+                  ),
+                );
               } on PlatformException {
                 print('failure scan');
               }
@@ -180,7 +218,7 @@ class _MyBookingState extends State<MyBooking> {
     );
   }
 
-  _showMyDialog(String bookingId) async {
+  _showMyDialog(Booking booking) async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -188,54 +226,49 @@ class _MyBookingState extends State<MyBooking> {
         return AlertDialog(
           title: const Text('Xác nhận trả device'),
           content: SingleChildScrollView(
-            child: StreamBuilder(
-              stream:
-              firestore.collection('booking').doc(bookingId).snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Text("Loading");
+            child: BlocBuilder<AssetBloc, AssetState>(
+              bloc: _assetBloc..add(LoadAssetById(booking.asset.id)),
+              builder: (context, state) {
+                if (state is AssetLoading) {
+                  return const Center(child: Text('Loading..'));
+                } else if (state is AssetByIdLoaded) {
+                  final asset = state.asset;
+                  final picSize = asset.pictures?.length ?? 0;
+
+                  return ListBody(
+                    children: [
+                      picSize > 0
+                          ? CarouselSlider.builder(
+                              itemCount: picSize,
+                              itemBuilder: (context, itemIndex, pageViewIndex) {
+                                return Image(
+                                  image:
+                                      NetworkImage(asset.pictures![itemIndex]),
+                                );
+                              },
+                              options: CarouselOptions(
+                                autoPlay: false,
+                                enlargeCenterPage: true,
+                                viewportFraction: 0.9,
+                                aspectRatio: 2.0,
+                                initialPage: picSize,
+                              ),
+                            )
+                          : const Text(
+                              'No Picture!',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                      Text('Asset code: ${asset.assetCode}'),
+                      Text('Model name: ${asset.modelName}'),
+                      Text('Serial number: ${asset.serialNumber}'),
+                      Text('Loại: ${asset.type}'),
+                    ],
+                  );
                 }
-
-                final data = snapshot.data?.data();
-                final assetRef = data?['asset'] as DocumentReference;
-
-                return StreamBuilder(
-                  stream: assetRef.snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Text('Loading..');
-                    }
-                    final data = snapshot.data!.data() as JsonMap;
-                    final assetCode = data['assetCode'];
-                    final modelName = data['modelName'];
-                    final serialNumber = data['serialNumber'];
-                    final pictures = data['pictures'];
-                    final type = data['type'];
-
-                    return ListBody(
-                      children: <Widget>[
-                        CarouselSlider.builder(
-                          itemCount: pictures.length,
-                          itemBuilder: (context, itemIndex, pageViewIndex) {
-                            return Image(
-                              image: NetworkImage(pictures[itemIndex]),
-                            );
-                          },
-                          options: CarouselOptions(
-                            autoPlay: false,
-                            enlargeCenterPage: true,
-                            viewportFraction: 0.9,
-                            aspectRatio: 2.0,
-                            initialPage: 2,
-                          ),
-                        ),
-                        Text('Asset code: $assetCode'),
-                        Text('Model name: $modelName'),
-                        Text('Serial number: $serialNumber'),
-                        Text('Loại: $type'),
-                      ],
-                    );
-                  },
+                return const Center(
+                  child: Text(
+                    'Đã có lỗi xảy ra. Vui lòng liên hệ LongTH20 để được hỗ trợ!',
+                  ),
                 );
               },
             ),
@@ -248,7 +281,7 @@ class _MyBookingState extends State<MyBooking> {
             TextButton(
               child: const Text('Xác nhận'),
               onPressed: () {
-                firestore.collection('booking').doc(bookingId).update({
+                firestore.collection('booking').doc(booking.id).update({
                   "endedAt": DateTime.now(),
                 });
                 Navigator.of(context).pop();

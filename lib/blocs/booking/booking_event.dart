@@ -8,6 +8,12 @@ abstract class BookingEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class LoadBookingById extends BookingEvent {
+  final String documentId;
+
+  const LoadBookingById(this.documentId);
+}
+
 class LoadBooking extends BookingEvent {
   const LoadBooking(this.createdAt);
 

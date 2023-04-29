@@ -8,6 +8,7 @@ class Asset {
   const Asset({
     this.id,
     required this.assetCode,
+    this.pictures,
     this.modelName,
     this.serialNumber,
     required this.type,
@@ -15,6 +16,7 @@ class Asset {
 
   final String? id;
   final String assetCode;
+  final List<String>? pictures;
   final String? modelName;
   final String? serialNumber;
   final String type;
@@ -25,6 +27,7 @@ class Asset {
       id: snapshot.id,
       assetCode: data['assetCode'],
       modelName: data['modelName'],
+      pictures: data['pictures'] ?? [],
       serialNumber: data['serialNumber'],
       type: data['type'],
     );
