@@ -103,7 +103,7 @@ class AddAssetScreen extends StatelessWidget {
                     );
                     Navigator.pop(context);
                   },
-                  child: Center(child: const Text('Thêm')),
+                  child: const Center(child: Text('Thêm')),
                 ),
               ),
             ],
