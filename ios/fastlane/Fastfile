@@ -1,0 +1,55 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+firebase_app_id = "1:518829323508:ios:529ec8854ca907b6951aa1"
+app_testers = [
+  "tranlong.kma@email.com",
+  "tranhuulong131@email.com",
+]
+tester_udids_file = "tester_udids.txt"
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+# platform :ios do
+#   desc "Description of what the lane does"
+#   lane :custom_lane do
+#     # add actions here: https://docs.fastlane.tools/actions
+#   end
+# end
+
+lane :build do
+    get_certificates()
+    get_provisioning_profile(adhoc: true, force: true)
+    build_app(export_method: "ad-hoc")
+end
+
+lane :distribute do
+    build
+    firebase_app_distribution(
+        app: firebase_app_id,
+        release_notes: "Try out this app!",
+        testers: app_testers.join(","),
+    )
+end
+
+lane :download_udids do
+    firebase_app_distribution_get_udids(
+        app: firebase_app_id,
+        output_file: tester_udids_file,
+    )
+end
+
+lane :add_new_devices do
+    register_devices(devices_file: tester_udids_file)
+end
