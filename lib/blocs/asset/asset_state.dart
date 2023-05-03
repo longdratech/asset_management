@@ -22,14 +22,16 @@ class AssetLoaded extends AssetState {
   List<Object> get props => [assets];
 }
 
-class AssetByIdLoaded extends AssetState {
+class AssetByLoaded extends AssetState {
   final Asset asset;
 
-  const AssetByIdLoaded(this.asset);
+  const AssetByLoaded(this.asset);
 }
 
 class AssetAdded extends AssetState {
-  const AssetAdded();
+  final Asset asset;
+
+  const AssetAdded(this.asset);
 }
 
 class AssetFailure extends AssetState {}

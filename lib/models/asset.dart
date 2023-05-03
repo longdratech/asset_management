@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:json_annotation/json_annotation.dart';
 
 import 'json_map.dart';
-import 'package:uuid/uuid.dart';
 
 class Asset {
   const Asset({
@@ -35,7 +33,6 @@ class Asset {
 
   JsonMap toFirestore() {
     return {
-      "id": id ?? const Uuid().v4(),
       "assetCode": assetCode,
       "modelName": modelName,
       if (serialNumber != null) "serialNumber": serialNumber,

@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../blocs/booking/booking_event.dart';
 import '../models/booking.dart';
+import '../models/json_map.dart';
 import 'firestore_repository.dart';
 
 class BookingRepository {
   final _firestore = FirestoreRepository();
-  final path = 'booking';
+  final path = 'bookings';
   static final BookingRepository _singleton = BookingRepository._internal();
 
   factory BookingRepository() {
@@ -36,6 +38,10 @@ class BookingRepository {
     });
   }
 
+  DocumentReference<JsonMap> reference(String ref) {
+    return _firestore.doc(ref);
+  }
+
   Future<DocumentReference> requestAsset(Booking data) async {
     return await _firestore.addDocument(path, data);
   }
@@ -48,5 +54,16 @@ class BookingRepository {
         .where("assetCode", isEqualTo: assetCode)
         .limit(1)
         .get();
+  }
+
+  Future<Booking> addOne(ReqBooking reqBooking) async {
+    final a = await _firestore.collection(path).add({
+      "asset": reqBooking.assetRef,
+      "createdAt": reqBooking.createdAt ?? Timestamp.now(),
+      "employee": reqBooking.name,
+      "endedAt": null
+    });
+
+    return Booking.fromDocumentSnapshot(await a.get());
   }
 }

@@ -15,7 +15,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../blocs/booking/booking_bloc.dart';
-import '../../models/json_map.dart';
+import '../../models/asset.dart';
 import '../../repositories/firestore_repository.dart';
 import '../assets/add_asset.dart';
 
@@ -109,10 +109,10 @@ class _MyBookingState extends State<MyBooking> {
                                   BlocBuilder<AssetBloc, AssetState>(
                                     bloc: _assetBloc
                                       ..add(
-                                        LoadAssetById(data[i].asset.id),
+                                        LoadAssetById(data[i].assetRef),
                                       ),
                                     builder: (context, state) {
-                                      if (state is AssetByIdLoaded) {
+                                      if (state is AssetByLoaded) {
                                         final assetCode = state.asset.assetCode;
                                         return Text.rich(
                                           TextSpan(
@@ -180,54 +180,84 @@ class _MyBookingState extends State<MyBooking> {
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
               try {
-                String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+                String assetCode = await FlutterBarcodeScanner.scanBarcode(
                   '#ff6666',
                   'Cancel',
                   true,
                   ScanMode.QR,
                 );
-                final assetCode = barcodeScanRes;
-                String? member;
 
-                final bookings = await _bloc.getBooking(ReqBooking(
-                  createdAt: _current(_selectedIndex),
-                  assetCode: assetCode,
-                ));
+                final asset = await _assetBloc.getAsset(
+                  LoadAsset(assetCode: assetCode),
+                );
 
-                if (bookings.isEmpty) {
-                  final asset = await _assetBloc.getAsset(
-                    LoadAsset(assetCode: assetCode),
+                if (asset != null) {
+                  final bookings = await _bloc.getBooking(
+                    LoadBooking(_current(_selectedIndex), asset: asset),
                   );
+                  final noBookingInToday = bookings.isEmpty;
 
-                  if (asset == null) {
-                    await Navigator.pushNamed(
-                      context,
-                      addAsset,
-                      arguments: AddAssetArguments(assetCode),
+                  if (noBookingInToday) {
+                    final member = await showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return const ChooseMember();
+                      },
+                    );
+                    _bloc.add(
+                      ReqBooking(
+                        // createdAt: _current(_selectedIndex),
+                        name: member,
+                        assetRef: 'assets/${asset.id}',
+                      ),
+                    );
+                  } else {
+                    _bloc.add(
+                      ReturnBooking(
+                        bookings[0].id,
+                        endedAt: DateTime.now(),
+                      ),
                     );
                   }
-
-                  member = await showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return ChooseMember();
-                    },
+                } else {
+                  final snackbar = SnackBar(
+                    content: Text(
+                        'Tài sản chưa tồn tại trong hệ thống. Chuyển tiếp sang trang thêm mới...'),
                   );
+                  final show =
+                      ScaffoldMessenger.of(context).showSnackBar(snackbar);
+
+                  await Future.delayed(const Duration(milliseconds: 2000));
+                  show.close();
+
+                  final asset = await Navigator.pushNamed(
+                    context,
+                    addAsset,
+                    arguments: AddAssetArguments(assetCode),
+                  );
+
+                  if (asset != null) {
+                    final member = await showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return ChooseMember();
+                      },
+                    );
+
+                    _bloc.add(
+                      ReqBooking(
+                        createdAt: _current(_selectedIndex),
+                        name: member,
+                        assetRef: 'assets/${(asset as Asset).id}',
+                      ),
+                    );
+                  }
                 }
-                _bloc.add(
-                  ReqBooking(
-                    createdAt: DateFormat('dd/MM/yyyy').parse(
-                      datetime[_selectedIndex],
-                    ),
-                    assetCode: assetCode,
-                    name: member,
-                  ),
-                );
               } on PlatformException {
                 print('failure scan');
               }
             },
-            child: Icon(Icons.add),
+            child: const Icon(Icons.add),
           ),
         ),
       ),
@@ -243,11 +273,11 @@ class _MyBookingState extends State<MyBooking> {
           title: const Text('Xác nhận trả device'),
           content: SingleChildScrollView(
             child: BlocBuilder<AssetBloc, AssetState>(
-              bloc: _assetBloc..add(LoadAssetById(booking.asset.id)),
+              bloc: _assetBloc..add(LoadAssetById(booking.assetRef)),
               builder: (context, state) {
                 if (state is AssetLoading) {
                   return const Center(child: Text('Loading..'));
-                } else if (state is AssetByIdLoaded) {
+                } else if (state is AssetByLoaded) {
                   final asset = state.asset;
                   final picSize = asset.pictures?.length ?? 0;
 

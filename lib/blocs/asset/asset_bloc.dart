@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:assets_management/blocs/asset/asset_state.dart';
-import 'package:assets_management/models/json_map.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../models/asset.dart';
@@ -28,12 +26,12 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
     );
   }
 
-  Future<DocumentReference<JsonMap>?> getAsset(LoadAsset event) async {
+  Future<Asset?> getAsset(LoadAsset event) async {
     return await _repository.getAsset(event);
   }
 
-  FutureOr<void> onAdd(AddAsset event) async {
-    await _repository.addOne(
+  Future<Asset> onAdd(AddAsset event) async {
+    return await _repository.addOne(
       Asset(
         assetCode: event.assetCode,
         modelName: event.modelName,
@@ -50,7 +48,10 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
     await emit.forEach(
       _repository.selectOne(event),
       onData: (data) {
-        return AssetByIdLoaded(data);
+        return AssetByLoaded(data);
+      },
+      onError: (err, stack) {
+        return AssetFailure();
       },
     );
   }

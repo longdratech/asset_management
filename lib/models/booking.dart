@@ -3,16 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Booking {
   final String id;
-  final DocumentReference asset;
-  final String? assetCode;
+  final String assetRef;
   final DateTime createdAt;
   final String employee;
   final DateTime? endedAt;
 
   Booking({
     required this.id,
-    required this.asset,
-    this.assetCode,
+    required this.assetRef,
     required this.createdAt,
     required this.employee,
     this.endedAt,
@@ -22,7 +20,7 @@ class Booking {
     final data = snapshot.data() as JsonMap;
     return Booking(
       id: snapshot.id,
-      asset: data['asset'],
+      assetRef: data['asset'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       employee: data['employee'],
       endedAt: data['endedAt'] != null

@@ -2,7 +2,6 @@ import 'package:assets_management/models/asset.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../blocs/asset/asset_event.dart';
-import '../models/json_map.dart';
 import 'firestore_repository.dart';
 
 class AssetRepository {
@@ -36,26 +35,29 @@ class AssetRepository {
   }
 
   Stream<Asset> selectOne(LoadAssetById event) {
+    final split = event.documentId.split("/");
     return _firestore
-        .collection(path)
-        .doc(event.documentId)
+        .doc(split.isNotEmpty ? event.documentId : "$path/${event.documentId}")
         .snapshots()
         .map((snapshot) {
       return Asset.fromFirestore(snapshot);
     });
   }
 
-  Future<DocumentReference<Map<String, dynamic>>> addOne(Asset asset) async {
-    return await _firestore.collection(path).add(asset.toFirestore());
+  Future<Asset> addOne(Asset asset) async {
+    final added = await _firestore.collection(path).add(asset.toFirestore());
+    return Asset.fromFirestore(await added.get());
   }
 
-  Future<DocumentReference<JsonMap>?> getAsset(LoadAsset event) async {
+  Future<Asset?> getAsset(LoadAsset event) async {
     final ref = await collection()
         .where("assetCode", isEqualTo: event.assetCode)
         .limit(1)
         .get();
-    return ref.docs.isEmpty
-        ? null
-        : _firestore.collection(path).doc(ref.docs.single.id);
+    if (ref.docs.isNotEmpty) {
+      final a = _firestore.collection(path).doc(ref.docs.single.id);
+      return Asset.fromFirestore(await a.get());
+    }
+    return null;
   }
 }

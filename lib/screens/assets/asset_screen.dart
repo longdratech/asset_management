@@ -70,9 +70,8 @@ class AssetScreen extends StatelessWidget {
           );
 
           final asset = await bloc.getAsset(LoadAsset(assetCode: assetCode));
-          final data = (await asset?.get())?.data();
 
-          if (data == null) {
+          if (asset == null) {
             Navigator.of(context)
                 .pushNamed(addAsset, arguments: AddAssetArguments(assetCode));
           } else {

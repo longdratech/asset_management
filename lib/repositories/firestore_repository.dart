@@ -1,3 +1,4 @@
+import 'package:assets_management/models/json_map.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreRepository {
@@ -20,5 +21,9 @@ class FirestoreRepository {
     return await FirebaseFirestore.instance
         .collection(collectionPath)
         .add(data);
+  }
+
+  DocumentReference<JsonMap> doc(String ref) {
+    return FirebaseFirestore.instance.doc(ref);
   }
 }

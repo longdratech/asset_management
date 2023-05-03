@@ -13,6 +13,12 @@ class LoadAssetById extends AssetEvent {
   const LoadAssetById(this.documentId);
 }
 
+class LoadAssetByRef extends AssetEvent {
+  final String ref;
+
+  const LoadAssetByRef(this.ref);
+}
+
 class LoadAsset extends AssetEvent {
   final String? assetCode;
 

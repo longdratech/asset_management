@@ -82,7 +82,7 @@ class AddAssetScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 25),
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     // Validate returns true if the form is valid, or false otherwise.
                     // if (_formKey.currentState!.validate()) {
                     //   ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +93,8 @@ class AddAssetScreen extends StatelessWidget {
                     String modelName = _modelNameController.text;
                     String serialNumber = _serialNumberController.text;
                     String type = _typeController.text;
-                    _bloc.add(
+
+                    final asset = await _bloc.onAdd(
                       AddAsset(
                         assetCode: args.assetCode,
                         modelName: modelName,
@@ -101,7 +102,7 @@ class AddAssetScreen extends StatelessWidget {
                         type: type,
                       ),
                     );
-                    Navigator.pop(context);
+                    Navigator.pop(context, asset);
                   },
                   child: const Center(child: Text('Thêm')),
                 ),
