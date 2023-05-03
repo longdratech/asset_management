@@ -225,11 +225,10 @@ class _MyBookingState extends State<MyBooking> {
                       content: Text(
                           'Tài sản chưa tồn tại trong hệ thống. Chuyển tiếp sang trang thêm mới...'),
                     );
-                    final show = ScaffoldMessenger.of(context)
-                        .showSnackBar(snackbar);
+                    final show =
+                        ScaffoldMessenger.of(context).showSnackBar(snackbar);
 
-                    await Future.delayed(
-                        const Duration(milliseconds: 2000));
+                    await Future.delayed(const Duration(milliseconds: 2000));
                     show.close();
 
                     final asset = await Navigator.pushNamed(
