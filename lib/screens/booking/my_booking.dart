@@ -187,70 +187,73 @@ class _MyBookingState extends State<MyBooking> {
                   ScanMode.QR,
                 );
 
-                final asset = await _assetBloc.getAsset(
-                  LoadAsset(assetCode: assetCode),
-                );
-
-                if (asset != null) {
-                  final bookings = await _bloc.getBooking(
-                    LoadBooking(_current(_selectedIndex), asset: asset),
-                  );
-                  final noBookingInToday = bookings.isEmpty;
-
-                  if (noBookingInToday) {
-                    final member = await showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return const ChooseMember();
-                      },
-                    );
-                    _bloc.add(
-                      ReqBooking(
-                        // createdAt: _current(_selectedIndex),
-                        name: member,
-                        assetRef: 'assets/${asset.id}',
-                      ),
-                    );
-                  } else {
-                    _bloc.add(
-                      ReturnBooking(
-                        bookings[0].id,
-                        endedAt: DateTime.now(),
-                      ),
-                    );
-                  }
-                } else {
-                  final snackbar = SnackBar(
-                    content: Text(
-                        'Tài sản chưa tồn tại trong hệ thống. Chuyển tiếp sang trang thêm mới...'),
-                  );
-                  final show =
-                      ScaffoldMessenger.of(context).showSnackBar(snackbar);
-
-                  await Future.delayed(const Duration(milliseconds: 2000));
-                  show.close();
-
-                  final asset = await Navigator.pushNamed(
-                    context,
-                    addAsset,
-                    arguments: AddAssetArguments(assetCode),
+                if (assetCode != "-1") {
+                  final asset = await _assetBloc.getAsset(
+                    LoadAsset(assetCode: assetCode),
                   );
 
                   if (asset != null) {
-                    final member = await showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return ChooseMember();
-                      },
+                    final bookings = await _bloc.getBooking(
+                      LoadBooking(_current(_selectedIndex), asset: asset),
+                    );
+                    final noBookingInToday = bookings.isEmpty;
+
+                    if (noBookingInToday) {
+                      final member = await showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return const ChooseMember();
+                        },
+                      );
+                      _bloc.add(
+                        ReqBooking(
+                          // createdAt: _current(_selectedIndex),
+                          name: member,
+                          assetRef: 'assets/${asset.id}',
+                        ),
+                      );
+                    } else {
+                      _bloc.add(
+                        ReturnBooking(
+                          bookings[0].id,
+                          endedAt: DateTime.now(),
+                        ),
+                      );
+                    }
+                  } else {
+                    final snackbar = SnackBar(
+                      content: Text(
+                          'Tài sản chưa tồn tại trong hệ thống. Chuyển tiếp sang trang thêm mới...'),
+                    );
+                    final show = ScaffoldMessenger.of(context)
+                        .showSnackBar(snackbar);
+
+                    await Future.delayed(
+                        const Duration(milliseconds: 2000));
+                    show.close();
+
+                    final asset = await Navigator.pushNamed(
+                      context,
+                      addAsset,
+                      arguments: AddAssetArguments(assetCode),
                     );
 
-                    _bloc.add(
-                      ReqBooking(
-                        createdAt: _current(_selectedIndex),
-                        name: member,
-                        assetRef: 'assets/${(asset as Asset).id}',
-                      ),
-                    );
+                    if (asset != null) {
+                      final member = await showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return ChooseMember();
+                        },
+                      );
+
+                      _bloc.add(
+                        ReqBooking(
+                          createdAt: _current(_selectedIndex),
+                          name: member,
+                          assetRef: 'assets/${(asset as Asset).id}',
+                        ),
+                      );
+                    }
                   }
                 }
               } on PlatformException {
