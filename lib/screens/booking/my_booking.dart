@@ -110,7 +110,9 @@ class _MyBookingState extends State<MyBooking> {
                               padding: const EdgeInsets.only(top: 12),
                               child: GestureDetector(
                                 onTap: () {
-                                  _showMyDialog(data[i]);
+                                  if (Platform.isAndroid || Platform.isIOS) {
+                                    _showMyDialog(data[i]);
+                                  }
                                 },
                                 child: ListBody(
                                   children: <Widget>[
@@ -401,14 +403,12 @@ class _MyBookingState extends State<MyBooking> {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: (Platform.isAndroid || Platform.isIOS)
-                  ? () {
-                      _bloc.add(
-                        ReturnBooking(booking.id, endedAt: DateTime.now()),
-                      );
-                      Navigator.of(context).pop();
-                    }
-                  : () {},
+              onPressed: () {
+                _bloc.add(
+                  ReturnBooking(booking.id, endedAt: DateTime.now()),
+                );
+                Navigator.of(context).pop();
+              },
               child: const Text('Xác nhận'),
             ),
           ],
