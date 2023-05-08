@@ -306,12 +306,14 @@ class _MyBookingState extends State<MyBooking> {
     } else {
       final snackbar = SnackBar(
         content: Text(
-            'Tài sản chưa tồn tại trong hệ thống. Chuyển tiếp sang trang thêm mới...'),
+          'Tài sản chưa tồn tại trong hệ thống. Vui lòng thêm mới...',
+        ),
+        duration: Duration(milliseconds: 1500),
       );
       final show = ScaffoldMessenger.of(context).showSnackBar(snackbar);
 
-      await Future.delayed(const Duration(milliseconds: 2000));
-      show.close();
+      // await Future.delayed(const Duration(milliseconds: 2000));
+      // show.close();
 
       final asset = await Navigator.pushNamed(
         context,
