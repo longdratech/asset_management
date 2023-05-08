@@ -26,7 +26,7 @@ class _ChooseMemberState extends State<ChooseMember> {
         builder: (context, state) {
           if (state is MemberLoaded) {
             return DropdownButton<String>(
-              value: dropdownValue ?? state.members.first.name,
+              value: dropdownValue,
               icon: const Icon(Icons.arrow_downward),
               elevation: 16,
               style: const TextStyle(color: Colors.deepPurple),

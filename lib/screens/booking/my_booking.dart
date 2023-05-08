@@ -217,10 +217,10 @@ class _MyBookingState extends State<MyBooking> {
                                     Theme.of(context).textTheme.labelLarge,
                               ),
                               child: const Text('Xác nhận'),
-                              onPressed: () {
+                              onPressed: () async {
                                 final assetCode = _controller.text;
                                 if (assetCode.isNotEmpty) {
-                                  process(_controller.text);
+                                  _process(_controller.text);
                                 }
                                 _controller.clear();
                                 Navigator.of(context).pop();
@@ -245,7 +245,7 @@ class _MyBookingState extends State<MyBooking> {
                       ScanMode.QR,
                     );
                     if (assetCode != "-1") {
-                      process(assetCode);
+                      await _process(assetCode);
                     }
                   } on PlatformException {
                     print('failure scan');
@@ -260,7 +260,7 @@ class _MyBookingState extends State<MyBooking> {
     );
   }
 
-  process(String assetCode) async {
+  _process(String assetCode) async {
     // if (assetCode != "-1") {
     final asset = await _assetBloc.getAsset(
       LoadAsset(assetCode: assetCode),
@@ -295,7 +295,7 @@ class _MyBookingState extends State<MyBooking> {
         );
       }
     } else {
-      final snackbar =  SnackBar(
+      final snackbar = SnackBar(
         content: Text(
             'Tài sản chưa tồn tại trong hệ thống. Chuyển tiếp sang trang thêm mới...'),
       );

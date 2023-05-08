@@ -60,27 +60,84 @@ class AssetScreen extends StatelessWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          String assetCode = await FlutterBarcodeScanner.scanBarcode(
-            '#ff6666',
-            'Cancel',
-            true,
-            ScanMode.QR,
-          );
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: FloatingActionButton(
+              heroTag: "text",
+              onPressed: () async {
+                final _controller = TextEditingController();
+                await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Nhập mã tài sản'),
+                      content: TextField(
+                        controller: _controller,
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            textStyle: Theme.of(context).textTheme.labelLarge,
+                          ),
+                          child: const Text('Cancel'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            textStyle: Theme.of(context).textTheme.labelLarge,
+                          ),
+                          child: const Text('Xác nhận'),
+                          onPressed: () async {
+                            final assetCode = _controller.text;
+                            if (assetCode.isNotEmpty) {
+                              _process(context, _controller.text);
+                            }
+                            _controller.clear();
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              child: const Icon(Icons.text_fields),
+            ),
+          ),
+          FloatingActionButton(
+            onPressed: () async {
+              String assetCode = await FlutterBarcodeScanner.scanBarcode(
+                '#ff6666',
+                'Cancel',
+                true,
+                ScanMode.QR,
+              );
 
-          final asset = await bloc.getAsset(LoadAsset(assetCode: assetCode));
-
-          if (asset == null) {
-            Navigator.of(context)
-                .pushNamed(addAsset, arguments: AddAssetArguments(assetCode));
-          } else {
-            Navigator.of(context).pushNamed(myAssetDetail,
-                arguments: AssetDetailArguments(assetCode));
-          }
-        },
-        child: const Icon(Icons.camera_alt_outlined),
+              if (assetCode != "-1") {
+                await _process(context, assetCode);
+              }
+            },
+            child: const Icon(Icons.camera_alt_outlined),
+          ),
+        ],
       ),
     );
+  }
+
+  _process(BuildContext context, String assetCode) async {
+    final asset = await bloc.getAsset(LoadAsset(assetCode: assetCode));
+
+    if (asset == null) {
+      Navigator.of(context)
+          .pushNamed(addAsset, arguments: AddAssetArguments(assetCode));
+    } else {
+      Navigator.of(context)
+          .pushNamed(myAssetDetail, arguments: AssetDetailArguments(assetCode));
+    }
   }
 }
