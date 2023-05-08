@@ -79,7 +79,7 @@ class AssetScreen extends StatelessWidget {
                 arguments: AssetDetailArguments(assetCode));
           }
         },
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.camera_alt_outlined),
       ),
     );
   }
