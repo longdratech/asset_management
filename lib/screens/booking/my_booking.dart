@@ -28,7 +28,7 @@ class MyBooking extends StatefulWidget {
 
 class _MyBookingState extends State<MyBooking> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
-
+  late TextEditingController _controller;
   final repository = FirestoreRepository();
   final _bloc = BookingBloc();
   final _assetBloc = AssetBloc();
@@ -48,6 +48,13 @@ class _MyBookingState extends State<MyBooking> {
     super.initState();
     _selectedIndex =
         datetime.indexOf(DateFormat('dd/MM/yyyy').format(DateTime.now()));
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
   }
 
   @override
@@ -177,93 +184,150 @@ class _MyBookingState extends State<MyBooking> {
               },
             ),
           ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () async {
-              try {
-                String assetCode = await FlutterBarcodeScanner.scanBarcode(
-                  '#ff6666',
-                  'Cancel',
-                  true,
-                  ScanMode.QR,
-                );
-
-                if (assetCode != "-1") {
-                  final asset = await _assetBloc.getAsset(
-                    LoadAsset(assetCode: assetCode),
-                  );
-
-                  if (asset != null) {
-                    final bookings = await _bloc.getBooking(
-                      LoadBooking(_current(_selectedIndex), asset: asset),
+          floatingActionButton: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: FloatingActionButton(
+                  heroTag: "text",
+                  onPressed: () async {
+                    await showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Nhập mã tài sản'),
+                          content: TextField(
+                            controller: _controller,
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                textStyle:
+                                    Theme.of(context).textTheme.labelLarge,
+                              ),
+                              child: const Text('Cancel'),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                textStyle:
+                                    Theme.of(context).textTheme.labelLarge,
+                              ),
+                              child: const Text('Xác nhận'),
+                              onPressed: () {
+                                final assetCode = _controller.text;
+                                if (assetCode.isNotEmpty) {
+                                  process(_controller.text);
+                                }
+                                _controller.clear();
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        );
+                      },
                     );
-                    final noBookingInToday = bookings.isEmpty;
-
-                    if (noBookingInToday) {
-                      final member = await showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return const ChooseMember();
-                        },
-                      );
-                      _bloc.add(
-                        ReqBooking(
-                          // createdAt: _current(_selectedIndex),
-                          name: member,
-                          assetRef: 'assets/${asset.id}',
-                        ),
-                      );
-                    } else {
-                      _bloc.add(
-                        ReturnBooking(
-                          bookings[0].id,
-                          endedAt: DateTime.now(),
-                        ),
-                      );
+                  },
+                  child: const Icon(Icons.text_fields),
+                ),
+              ),
+              FloatingActionButton(
+                heroTag: "camera",
+                onPressed: () async {
+                  try {
+                    String assetCode = await FlutterBarcodeScanner.scanBarcode(
+                      '#ff6666',
+                      'Cancel',
+                      true,
+                      ScanMode.QR,
+                    );
+                    if (assetCode != "-1") {
+                      process(assetCode);
                     }
-                  } else {
-                    final snackbar = SnackBar(
-                      content: Text(
-                          'Tài sản chưa tồn tại trong hệ thống. Chuyển tiếp sang trang thêm mới...'),
-                    );
-                    final show =
-                        ScaffoldMessenger.of(context).showSnackBar(snackbar);
-
-                    await Future.delayed(const Duration(milliseconds: 2000));
-                    show.close();
-
-                    final asset = await Navigator.pushNamed(
-                      context,
-                      addAsset,
-                      arguments: AddAssetArguments(assetCode),
-                    );
-
-                    if (asset != null) {
-                      final member = await showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return ChooseMember();
-                        },
-                      );
-
-                      _bloc.add(
-                        ReqBooking(
-                          createdAt: _current(_selectedIndex),
-                          name: member,
-                          assetRef: 'assets/${(asset as Asset).id}',
-                        ),
-                      );
-                    }
+                  } on PlatformException {
+                    print('failure scan');
                   }
-                }
-              } on PlatformException {
-                print('failure scan');
-              }
-            },
-            child: const Icon(Icons.add),
+                },
+                child: const Icon(Icons.camera_alt_outlined),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  process(String assetCode) async {
+    // if (assetCode != "-1") {
+    final asset = await _assetBloc.getAsset(
+      LoadAsset(assetCode: assetCode),
+    );
+
+    if (asset != null) {
+      final bookings = await _bloc.getBooking(
+        LoadBooking(_current(_selectedIndex), asset: asset),
+      );
+      final noBookingInToday = bookings.isEmpty;
+
+      if (noBookingInToday) {
+        final member = await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return const ChooseMember();
+          },
+        );
+        _bloc.add(
+          ReqBooking(
+            // createdAt: _current(_selectedIndex),
+            name: member,
+            assetRef: 'assets/${asset.id}',
+          ),
+        );
+      } else {
+        _bloc.add(
+          ReturnBooking(
+            bookings[0].id,
+            endedAt: DateTime.now(),
+          ),
+        );
+      }
+    } else {
+      final snackbar =  SnackBar(
+        content: Text(
+            'Tài sản chưa tồn tại trong hệ thống. Chuyển tiếp sang trang thêm mới...'),
+      );
+      final show = ScaffoldMessenger.of(context).showSnackBar(snackbar);
+
+      await Future.delayed(const Duration(milliseconds: 2000));
+      show.close();
+
+      final asset = await Navigator.pushNamed(
+        context,
+        addAsset,
+        arguments: AddAssetArguments(assetCode),
+      );
+
+      if (asset != null) {
+        final member = await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return ChooseMember();
+          },
+        );
+
+        _bloc.add(
+          ReqBooking(
+            createdAt: _current(_selectedIndex),
+            name: member,
+            assetRef: 'assets/${(asset as Asset).id}',
+          ),
+        );
+      }
+    }
+    // }
   }
 
   _showMyDialog(Booking booking) async {
