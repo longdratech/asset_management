@@ -56,7 +56,7 @@ class _ChooseMemberState extends State<ChooseMember> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: () => Navigator.pop(context, 'Cancel'),
+          onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
         TextButton(
