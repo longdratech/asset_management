@@ -9,7 +9,6 @@ import 'package:assets_management/constants/routes.dart';
 import 'package:assets_management/models/booking.dart';
 import 'package:assets_management/screens/booking/choose_member.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
@@ -402,11 +401,15 @@ class _MyBookingState extends State<MyBooking> {
               child: const Text('Cancel'),
             ),
             TextButton(
+              onPressed: (Platform.isAndroid || Platform.isIOS)
+                  ? () {
+                      _bloc.add(
+                        ReturnBooking(booking.id, endedAt: DateTime.now()),
+                      );
+                      Navigator.of(context).pop();
+                    }
+                  : () {},
               child: const Text('Xác nhận'),
-              onPressed: () {
-                _bloc.add(ReturnBooking(booking.id, endedAt: DateTime.now()));
-                Navigator.of(context).pop();
-              },
             ),
           ],
         );
