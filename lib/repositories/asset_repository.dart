@@ -49,6 +49,15 @@ class AssetRepository {
     return Asset.fromFirestore(await added.get());
   }
 
+  Future<Asset> getAssetById(LoadAssetById event) async {
+    final split = event.documentId.split("/");
+    final asset = await _firestore
+        .doc(split.isNotEmpty ? event.documentId : "$path/${event.documentId}")
+        .snapshots()
+        .first;
+    return Asset.fromFirestore(asset);
+  }
+
   Future<Asset?> getAsset(LoadAsset event) async {
     final ref = await collection()
         .where("assetCode", isEqualTo: event.assetCode)

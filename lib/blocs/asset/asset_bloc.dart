@@ -26,6 +26,10 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
     );
   }
 
+  Future<Asset> getAssetById(LoadAssetById event) async {
+    return await _repository.getAssetById(event);
+  }
+
   Future<Asset?> getAsset(LoadAsset event) async {
     return await _repository.getAsset(event);
   }

@@ -115,15 +115,15 @@ class _MyBookingState extends State<MyBooking> {
                                 },
                                 child: ListBody(
                                   children: <Widget>[
-                                    BlocBuilder<AssetBloc, AssetState>(
-                                      bloc: _assetBloc
-                                        ..add(
-                                          LoadAssetById(data[i].assetRef),
-                                        ),
-                                      builder: (context, state) {
-                                        if (state is AssetByLoaded) {
+                                    FutureBuilder(
+                                      future: _assetBloc.getAssetById(
+                                        LoadAssetById(data[i].assetRef),
+                                      ),
+                                      builder: (context, snapshot) {
+                                        final state = snapshot.connectionState;
+                                        if (state == ConnectionState.done) {
                                           final assetCode =
-                                              state.asset.assetCode;
+                                              snapshot.data!.assetCode;
                                           return Text.rich(
                                             TextSpan(
                                               text: 'Asset code: ',
