@@ -9,6 +9,7 @@ import 'package:assets_management/constants/routes.dart';
 import 'package:assets_management/models/booking.dart';
 import 'package:assets_management/screens/booking/choose_member.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
@@ -19,6 +20,8 @@ import '../../blocs/booking/booking_bloc.dart';
 import '../../models/asset.dart';
 import '../../repositories/firestore_repository.dart';
 import '../assets/add_asset.dart';
+
+enum Categories { Laptop, Camera, Lens, Adapter, Hub }
 
 class MyBooking extends StatefulWidget {
   const MyBooking({super.key});
@@ -43,6 +46,11 @@ class _MyBookingState extends State<MyBooking> {
   }).toList();
 
   int _selectedIndex = 0;
+  Set<Categories> selection = <Categories>{
+    Categories.Laptop,
+    Categories.Camera,
+    Categories.Adapter
+  };
 
   @override
   void initState() {
@@ -68,6 +76,8 @@ class _MyBookingState extends State<MyBooking> {
         child: Scaffold(
             appBar: AppBar(
               centerTitle: true,
+              scrolledUnderElevation: 5,
+              shadowColor: Colors.grey,
               title: PreferredSize(
                 preferredSize: const Size.fromHeight(30),
                 child: TabBar(
@@ -87,106 +97,113 @@ class _MyBookingState extends State<MyBooking> {
                 ),
               ),
             ),
-            body: RefreshIndicator(
-              onRefresh: () {
-                _bloc.add(LoadBooking(_current(_selectedIndex)));
-                return Future<void>.delayed(const Duration(seconds: 0));
-              },
-              child: BlocBuilder<BookingBloc, BookingState>(
-                builder: (context, state) {
-                  if (state is BookingLoading) {
-                    return const Center(child: Text('Loading...'));
-                  } else if (state is BookingLoaded) {
-                    final data = state.booking;
-                    if (data.isEmpty) {
-                      return const Center(child: Text('No data!'));
-                    } else {
-                      return Container(
-                        padding: const EdgeInsets.all(20),
-                        child: ListView.builder(
-                          itemCount: data.length,
-                          itemBuilder: (BuildContext context, int i) {
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 12),
-                              child: GestureDetector(
-                                onTap: () {
-                                  if (Platform.isAndroid || Platform.isIOS) {
-                                    _showMyDialog(data[i]);
-                                  }
-                                },
-                                child: ListBody(
-                                  children: <Widget>[
-                                    FutureBuilder(
-                                      future: _assetBloc.getAssetById(
-                                        LoadAssetById(data[i].assetRef),
-                                      ),
-                                      builder: (context, snapshot) {
-                                        final state = snapshot.connectionState;
-                                        if (state == ConnectionState.done) {
-                                          final assetCode =
-                                              snapshot.data!.assetCode;
-                                          return Text.rich(
-                                            TextSpan(
-                                              text: 'Asset code: ',
-                                              children: [
-                                                TextSpan(
-                                                  text: assetCode,
+            body: BlocBuilder<BookingBloc, BookingState>(
+              builder: (context, state) {
+                if (state is BookingLoading) {
+                  return const Center(child: Text('Loading...'));
+                } else if (state is BookingLoaded) {
+                  final data = state.booking;
+                  if (data.isEmpty) {
+                    return const Center(child: Text('No data!'));
+                  } else {
+                    return ListView.builder(
+                      itemCount: data.length,
+                      itemBuilder: (BuildContext context, int i) {
+                        return GestureDetector(
+                          onTap: () {
+                            _showMyDialog(data[i]);
+                          },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.only(
+                                  left: 20,
+                                  top: 20,
+                                  right: 20,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.network(
+                                      'https://th.bing.com/th/id/OIP.45KbsvbD4r8MERxBWJbCgwHaHa?pid=ImgDet&rs=1',
+                                      height: 100,
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 10),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          FutureBuilder(
+                                            future: _assetBloc.getAssetById(
+                                              LoadAssetById(data[i].assetRef),
+                                            ),
+                                            builder: (context, snapshot) {
+                                              final state =
+                                                  snapshot.connectionState;
+                                              if (state ==
+                                                  ConnectionState.done) {
+                                                final assetCode =
+                                                    snapshot.data!.assetCode;
+                                                return Text(
+                                                  assetCode,
                                                   style: const TextStyle(
-                                                    color: Colors.black,
                                                     fontWeight: FontWeight.bold,
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        }
-                                        return const Text('Loading...');
-                                      },
-                                    ),
-                                    Text.rich(
-                                      TextSpan(
-                                        text: 'Trạng thái: ',
-                                        children: [
+                                                );
+                                              }
+                                              return const Text('Loading...');
+                                            },
+                                          ),
                                           data[i].endedAt == null
-                                              ? const TextSpan(
-                                                  text: 'Đang mượn',
+                                              ? const Text(
+                                                  'Đang mượn',
                                                   style: TextStyle(
                                                     color: Colors.red,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 )
-                                              : TextSpan(
-                                                  text:
-                                                      'Đã trả (${DateFormat('dd/MM/yyyy - HH:mm').format(data[i].endedAt!)})',
+                                              : Text(
+                                                  'Đã trả (${DateFormat('dd/MM/yyyy - HH:mm').format(data[i].endedAt!)})',
                                                   style: const TextStyle(
                                                     color: Colors.green,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
+                                          Text(
+                                            DateFormat('dd/MM/yyyy - HH:mm')
+                                                .format(data[i].createdAt),
+                                          ),
+                                          Text(
+                                            data[i].employee,
+                                          ),
                                         ],
                                       ),
                                     ),
-                                    Text(
-                                      "Thời gian mượn: ${DateFormat('dd/MM/yyyy - HH:mm').format(data[i].createdAt)}",
-                                    ),
-                                    Text("Người mượn:  ${data[i].employee}"),
                                   ],
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                      );
-                    }
-                  } else {
-                    return const Center(
-                      child: Text(
-                        'Đã có lỗi xảy ra. Vui lòng liên hệ LongTH20!',
-                      ),
+                              i + 1 != data.length
+                                  ? Divider(height: 0.5)
+                                  : Container(),
+                            ],
+                          ),
+                        );
+                      },
                     );
                   }
-                },
-              ),
+                } else {
+                  return const Center(
+                    child: Text(
+                      'Đã có lỗi xảy ra. Vui lòng liên hệ LongTH20!',
+                    ),
+                  );
+                }
+              },
             ),
             floatingActionButton: Column(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -403,13 +420,11 @@ class _MyBookingState extends State<MyBooking> {
               child: const Text('Cancel'),
             ),
             TextButton(
+              child: const Text('Xác nhận'),
               onPressed: () {
-                _bloc.add(
-                  ReturnBooking(booking.id, endedAt: DateTime.now()),
-                );
+                _bloc.add(ReturnBooking(booking.id, endedAt: DateTime.now()));
                 Navigator.of(context).pop();
               },
-              child: const Text('Xác nhận'),
             ),
           ],
         );
