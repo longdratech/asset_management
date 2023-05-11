@@ -130,7 +130,7 @@ class AssetScreen extends StatelessWidget {
   }
 
   _process(BuildContext context, String assetCode) async {
-    final asset = await bloc.getAsset(LoadAsset(assetCode: assetCode));
+    final asset = await bloc.getAssets(LoadAsset(assetCode: assetCode));
 
     if (asset == null) {
       Navigator.of(context)

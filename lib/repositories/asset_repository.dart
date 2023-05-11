@@ -58,14 +58,20 @@ class AssetRepository {
     return Asset.fromFirestore(asset);
   }
 
-  Future<Asset?> getAsset(LoadAsset event) async {
+  Future<List<Asset>?> getAssets(LoadAsset event) async {
+    List<Asset> assets = [];
     final ref = await collection()
-        .where("assetCode", isEqualTo: event.assetCode)
-        .limit(1)
+        .where('assetCode', isGreaterThanOrEqualTo: event.assetCode)
         .get();
     if (ref.docs.isNotEmpty) {
-      final a = _firestore.collection(path).doc(ref.docs.single.id);
-      return Asset.fromFirestore(await a.get());
+      for (final doc in ref.docs) {
+        assets.add(
+          Asset.fromFirestore(
+            await _firestore.collection(path).doc(doc.id).get(),
+          ),
+        );
+      }
+      return assets;
     }
     return null;
   }

@@ -8,6 +8,7 @@ import 'package:assets_management/blocs/booking/booking_state.dart';
 import 'package:assets_management/constants/routes.dart';
 import 'package:assets_management/models/booking.dart';
 import 'package:assets_management/screens/booking/choose_member.dart';
+import 'package:assets_management/widgets/asset_item.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -288,38 +289,69 @@ class _MyBookingState extends State<MyBooking> {
   }
 
   _process(String assetCode) async {
-    // if (assetCode != "-1") {
-    final asset = await _assetBloc.getAsset(
-      LoadAsset(assetCode: assetCode),
+    final assets = await _assetBloc.getAssets(
+      LoadAsset(assetCode: assetCode.toUpperCase()),
     );
 
-    if (asset != null) {
-      final bookings = await _bloc.getBooking(
-        LoadBooking(_current(_selectedIndex), asset: asset),
+    if (assets != null) {
+      final asset = await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Chọn asset'),
+            content: Container(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: assets.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context, assets[index]);
+                    },
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: AssetItem(asset: assets[index]),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
       );
-      final noBookingInToday = bookings.isEmpty;
+      if (asset != null) {
+        final bookings = await _bloc.getBooking(
+          LoadBooking(_current(_selectedIndex), asset: asset),
+        );
+        final noBookingInToday = bookings.isEmpty;
 
-      if (noBookingInToday) {
-        final member = await showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return const ChooseMember();
-          },
-        );
-        _bloc.add(
-          ReqBooking(
-            // createdAt: _current(_selectedIndex),
-            name: member,
-            assetRef: 'assets/${asset.id}',
-          ),
-        );
-      } else {
-        _bloc.add(
-          ReturnBooking(
-            bookings[0].id,
-            endedAt: DateTime.now(),
-          ),
-        );
+        if (noBookingInToday) {
+          final member = await showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return const ChooseMember();
+            },
+          );
+          _bloc.add(
+            ReqBooking(
+              name: member,
+              assetRef: 'assets/${asset.id}',
+            ),
+          );
+        } else {
+          _showMyDialog(bookings[0]);
+        }
       }
     } else {
       final snackbar = SnackBar(
@@ -328,10 +360,7 @@ class _MyBookingState extends State<MyBooking> {
         ),
         duration: Duration(milliseconds: 1500),
       );
-      final show = ScaffoldMessenger.of(context).showSnackBar(snackbar);
-
-      // await Future.delayed(const Duration(milliseconds: 2000));
-      // show.close();
+      ScaffoldMessenger.of(context).showSnackBar(snackbar);
 
       final asset = await Navigator.pushNamed(
         context,
@@ -356,7 +385,6 @@ class _MyBookingState extends State<MyBooking> {
         );
       }
     }
-    // }
   }
 
   _showMyDialog(Booking booking) async {
@@ -375,37 +403,8 @@ class _MyBookingState extends State<MyBooking> {
                   return const Center(child: Text('Loading..'));
                 } else if (state is AssetByLoaded) {
                   final asset = state.asset;
-                  final picSize = asset.pictures?.length ?? 0;
 
-                  return ListBody(
-                    children: [
-                      picSize > 0
-                          ? CarouselSlider.builder(
-                              itemCount: picSize,
-                              itemBuilder: (context, itemIndex, pageViewIndex) {
-                                return Image(
-                                  image:
-                                      NetworkImage(asset.pictures![itemIndex]),
-                                );
-                              },
-                              options: CarouselOptions(
-                                autoPlay: false,
-                                enlargeCenterPage: true,
-                                viewportFraction: 0.9,
-                                aspectRatio: 2.0,
-                                initialPage: picSize,
-                              ),
-                            )
-                          : const Text(
-                              'No Picture!',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                      Text('Asset code: ${asset.assetCode}'),
-                      Text('Model name: ${asset.modelName}'),
-                      Text('Serial number: ${asset.serialNumber}'),
-                      Text('Loại: ${asset.type}'),
-                    ],
-                  );
+                  return AssetItem(asset: asset);
                 }
                 return const Center(
                   child: Text(
