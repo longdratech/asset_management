@@ -365,7 +365,8 @@ class _MyBookingState extends State<MyBooking> {
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Xác nhận trả device'),
+          title: Text(
+              '${booking.endedAt != null ? "Huỷ xác nhận" : 'Xác nhận'} trả device'),
           content: SingleChildScrollView(
             child: BlocBuilder<AssetBloc, AssetState>(
               bloc: _assetBloc..add(LoadAssetById(booking.assetRef)),
@@ -422,7 +423,10 @@ class _MyBookingState extends State<MyBooking> {
             TextButton(
               child: const Text('Xác nhận'),
               onPressed: () {
-                _bloc.add(ReturnBooking(booking.id, endedAt: DateTime.now()));
+                _bloc.add(ReturnBooking(
+                  booking.id,
+                  endedAt: booking.endedAt == null ? DateTime.now() : null,
+                ));
                 Navigator.of(context).pop();
               },
             ),

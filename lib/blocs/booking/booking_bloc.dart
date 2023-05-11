@@ -58,6 +58,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     FirebaseFirestore.instance
         .collection('bookings')
         .doc(event.id)
-        .update({"endedAt": event.endedAt ?? Timestamp.now()});
+        .update({"endedAt": event.endedAt});
   }
 }
