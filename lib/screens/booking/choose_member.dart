@@ -27,6 +27,7 @@ class _ChooseMemberState extends State<ChooseMember> {
           if (state is MemberLoaded) {
             return DropdownButton<String>(
               value: dropdownValue,
+              hint: const Text('Chọn member...'),
               icon: const Icon(Icons.arrow_downward),
               elevation: 16,
               style: const TextStyle(color: Colors.deepPurple),
@@ -62,7 +63,13 @@ class _ChooseMemberState extends State<ChooseMember> {
         TextButton(
           child: const Text('Xác nhận'),
           onPressed: () {
-            Navigator.of(context).pop(dropdownValue);
+            if (dropdownValue == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Vui lòng chọn người mượn')),
+              );
+            } else {
+              Navigator.of(context).pop(dropdownValue);
+            }
           },
         ),
       ],
