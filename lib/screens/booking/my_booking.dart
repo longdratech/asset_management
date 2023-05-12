@@ -9,8 +9,6 @@ import 'package:assets_management/constants/routes.dart';
 import 'package:assets_management/models/booking.dart';
 import 'package:assets_management/screens/booking/choose_member.dart';
 import 'package:assets_management/widgets/asset_item.dart';
-import 'package:carousel_slider/carousel_slider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
@@ -393,8 +391,7 @@ class _MyBookingState extends State<MyBooking> {
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
-              '${booking.endedAt != null ? "Huỷ xác nhận" : 'Xác nhận'} trả device'),
+          title: const Text("Xác nhận"),
           content: SingleChildScrollView(
             child: BlocBuilder<AssetBloc, AssetState>(
               bloc: _assetBloc..add(LoadAssetById(booking.assetRef)),
@@ -416,17 +413,45 @@ class _MyBookingState extends State<MyBooking> {
           ),
           actions: <Widget>[
             TextButton(
-              onPressed: () => Navigator.pop(context, 'Cancel'),
+              onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
+            booking.endedAt == null
+                ? TextButton(
+                    onPressed: () {
+                      _bloc.add(TransferTo(
+                        booking.id,
+                        booking.assetRef,
+                        booking.employee,
+                        DateTime.now(),
+                      ));
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Next day'),
+                  )
+                : Container(),
             TextButton(
-              child: const Text('Xác nhận'),
+              child: Text(booking.endedAt == null ? 'Trả' : 'Huỷ Trả'),
               onPressed: () {
+                // if (booking.endedAt != null) {
+                //   final date1 = DateTime(
+                //     booking.endedAt!.year,
+                //     booking.endedAt!.month,
+                //     booking.endedAt!.day,
+                //   );
+                //   final date2 = DateTime(
+                //     DateTime.now().year,
+                //     DateTime.now().month,
+                //     DateTime.now().day,
+                //   );
+                //
+                //
+                // }
                 _bloc.add(ReturnBooking(
                   booking.id,
                   endedAt: booking.endedAt == null ? DateTime.now() : null,
                 ));
-                Navigator.of(context).pop();
+                Navigator.pop(context);
               },
             ),
           ],

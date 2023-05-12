@@ -15,6 +15,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<LoadBooking>(_onLoad);
     on<ReqBooking>(_onReq);
     on<ReturnBooking>(_onReturn);
+    on<TransferTo>(_onTransferTo);
   }
 
   Future<void> _onLoad(
@@ -59,5 +60,20 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         .collection('bookings')
         .doc(event.id)
         .update({"endedAt": event.endedAt});
+  }
+
+  FutureOr<void> _onTransferTo(
+    TransferTo event,
+    Emitter<BookingState> emit,
+  ) async {
+    await _onReturn(ReturnBooking(event.bookingId, endedAt: event.toCreatedAt), emit);
+    await _onReq(
+      ReqBooking(
+        assetRef: event.assetRef,
+        name: event.member,
+        createdAt: event.toCreatedAt,
+      ),
+      emit,
+    );
   }
 }

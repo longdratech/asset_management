@@ -55,4 +55,13 @@ class ReturnBooking extends BookingEvent {
   const ReturnBooking(this.id, {this.endedAt});
 }
 
+class TransferTo extends BookingEvent {
+  final String bookingId;
+  final String assetRef;
+  final String member;
+  final DateTime toCreatedAt;
+
+  const TransferTo(this.bookingId, this.assetRef, this.member, this.toCreatedAt);
+}
+
 class RemoveBooking extends BookingEvent {}
