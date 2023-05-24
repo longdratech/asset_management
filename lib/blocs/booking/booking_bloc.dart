@@ -4,6 +4,7 @@ import 'package:assets_management/blocs/booking/booking_event.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../enums/filter_booking.dart';
 import '../../models/booking.dart';
 import '../../repositories/booking_repository.dart';
 import 'booking_state.dart';
@@ -24,11 +25,26 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   ) async {
     emit(BookingLoading());
     await emit.forEach<List<Booking>>(
-      _repository.selectAll(datetime: event.createdAt).map(
+      _repository.selectAll(event).map(
         (data) {
-          return data.map((doc) {
+          final a = data.map((doc) {
             return Booking.fromDocumentSnapshot(doc);
           }).toList();
+          if (event.filter == BookingOrderBy.notReturn) {
+            a.sort((a, b) {
+              if (a.endedAt != null && b.endedAt != null) {
+                return b.endedAt!.compareTo(a.endedAt!);
+              } else if (a.endedAt == null) {
+                return -1;
+              } else if (b.endedAt == null) {
+                return 1;
+              } else {
+                return 0;
+              }
+            });
+          }
+
+          return a;
         },
       ),
       onData: (data) {
@@ -56,17 +72,17 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     ReturnBooking event,
     Emitter<BookingState> emit,
   ) async {
-    FirebaseFirestore.instance
-        .collection('bookings')
-        .doc(event.id)
-        .update({"endedAt": event.endedAt});
+    _repository.collection().doc(event.id).update({"endedAt": event.endedAt});
   }
 
   FutureOr<void> _onTransferTo(
     TransferTo event,
     Emitter<BookingState> emit,
   ) async {
-    await _onReturn(ReturnBooking(event.bookingId, endedAt: event.toCreatedAt), emit);
+    await _onReturn(
+      ReturnBooking(event.bookingId, endedAt: event.toCreatedAt),
+      emit,
+    );
     await _onReq(
       ReqBooking(
         assetRef: event.assetRef,

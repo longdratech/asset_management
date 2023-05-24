@@ -3,6 +3,8 @@ import 'package:assets_management/models/booking.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
+import '../../enums/filter_booking.dart';
+
 abstract class BookingEvent extends Equatable {
   const BookingEvent();
 
@@ -17,10 +19,11 @@ class LoadBookingById extends BookingEvent {
 }
 
 class LoadBooking extends BookingEvent {
-  const LoadBooking(this.createdAt, {this.asset});
+  const LoadBooking(this.createdAt, {this.asset, this.filter});
 
   final DateTime createdAt;
   final Asset? asset;
+  final BookingOrderBy? filter;
 }
 
 class LoadBookingCompleted extends BookingEvent {
@@ -61,7 +64,8 @@ class TransferTo extends BookingEvent {
   final String member;
   final DateTime toCreatedAt;
 
-  const TransferTo(this.bookingId, this.assetRef, this.member, this.toCreatedAt);
+  const TransferTo(
+      this.bookingId, this.assetRef, this.member, this.toCreatedAt);
 }
 
 class RemoveBooking extends BookingEvent {}

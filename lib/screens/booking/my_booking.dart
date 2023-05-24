@@ -6,16 +6,21 @@ import 'package:assets_management/blocs/asset/asset_state.dart';
 import 'package:assets_management/blocs/booking/booking_event.dart';
 import 'package:assets_management/blocs/booking/booking_state.dart';
 import 'package:assets_management/constants/routes.dart';
+import 'package:assets_management/enums/filter_booking.dart';
 import 'package:assets_management/models/booking.dart';
+import 'package:assets_management/models/filter.dart';
 import 'package:assets_management/screens/booking/choose_member.dart';
 import 'package:assets_management/widgets/asset_item.dart';
+import 'package:assets_management/widgets/booking_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 
 import '../../blocs/booking/booking_bloc.dart';
+import '../../constants/bookings_filter.dart';
 import '../../models/asset.dart';
 import '../../repositories/firestore_repository.dart';
 import '../assets/add_asset.dart';
@@ -32,6 +37,8 @@ class MyBooking extends StatefulWidget {
 class _MyBookingState extends State<MyBooking> {
   // FirebaseFirestore firestore = FirebaseFirestore.instance;
   late TextEditingController _controller;
+  Filter _filterItem = bookingFilters[0];
+
   final repository = FirestoreRepository();
   final _bloc = BookingBloc();
   final _assetBloc = AssetBloc();
@@ -71,20 +78,27 @@ class _MyBookingState extends State<MyBooking> {
       initialIndex: _selectedIndex,
       length: datetime.length,
       child: BlocProvider(
-        create: (context) => _bloc..add(LoadBooking(DateTime.now())),
+        create: (context) => _bloc
+          ..add(LoadBooking(
+            DateTime.now(),
+            filter: _filterItem.value,
+          )),
         child: Scaffold(
             appBar: AppBar(
               centerTitle: true,
               scrolledUnderElevation: 5,
               shadowColor: Colors.grey,
-              title: PreferredSize(
+              bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(30),
                 child: TabBar(
                   isScrollable: true,
                   indicatorColor: Colors.white,
                   onTap: (index) {
                     _selectedIndex = index;
-                    _bloc.add(LoadBooking(_current(index)));
+                    _bloc.add(LoadBooking(
+                      _current(index),
+                      filter: _filterItem.value,
+                    ));
                   },
                   tabs: datetime.map(
                     (e) {
@@ -96,113 +110,195 @@ class _MyBookingState extends State<MyBooking> {
                 ),
               ),
             ),
-            body: BlocBuilder<BookingBloc, BookingState>(
-              builder: (context, state) {
-                if (state is BookingLoading) {
-                  return const Center(child: Text('Loading...'));
-                } else if (state is BookingLoaded) {
-                  final data = state.booking;
-                  if (data.isEmpty) {
-                    return const Center(child: Text('No data!'));
+            body: Scaffold(
+              appBar: AppBar(
+                title: Align(
+                  alignment: Alignment.topRight,
+                  child: DropdownButton<Filter>(
+                    value: _filterItem,
+                    icon: const Icon(Icons.arrow_downward),
+                    elevation: 16,
+                    style: const TextStyle(color: Colors.deepPurple),
+                    underline: Container(
+                      height: 2,
+                      color: Colors.deepPurpleAccent,
+                    ),
+                    onChanged: (Filter? value) {
+                      // This is called when the user selects an item.
+                      setState(() {
+                        _filterItem = value!;
+                      });
+                      _bloc.add(LoadBooking(
+                        _current(_selectedIndex),
+                        filter: _filterItem.value,
+                      ));
+                    },
+                    items: bookingFilters
+                        .map<DropdownMenuItem<Filter>>((Filter filter) {
+                      return DropdownMenuItem<Filter>(
+                        value: filter,
+                        child: Text(filter.label),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              body: BlocBuilder<BookingBloc, BookingState>(
+                builder: (context, state) {
+                  if (state is BookingLoading) {
+                    return const Center(child: Text('Loading...'));
+                  } else if (state is BookingLoaded) {
+                    final data = state.booking;
+                    if (data.isEmpty) {
+                      return const Center(child: Text('No data!'));
+                    } else {
+                      return ListView.builder(
+                        itemCount: data.length,
+                        itemBuilder: (BuildContext context, int i) {
+                          return GestureDetector(
+                            onTap: () {
+                              _showConfirmed(data[i]);
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.only(
+                                    left: 20,
+                                    top: 20,
+                                    right: 20,
+                                  ),
+                                  child: ItemBooking(
+                                    booking: data[i],
+                                    onChangedMember: (member) {
+                                      _bloc.add(
+                                        TransferTo(
+                                          data[i].id,
+                                          data[i].assetRef,
+                                          member,
+                                          DateTime.now(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  // child: Row(
+                                  //   crossAxisAlignment:
+                                  //       CrossAxisAlignment.start,
+                                  //   mainAxisAlignment: MainAxisAlignment.start,
+                                  //   mainAxisSize: MainAxisSize.min,
+                                  //   children: [
+                                  //     Image.network(
+                                  //       'https://th.bing.com/th/id/OIP.45KbsvbD4r8MERxBWJbCgwHaHa?pid=ImgDet&rs=1',
+                                  //       height: 100,
+                                  //     ),
+                                  //     Padding(
+                                  //       padding:
+                                  //           const EdgeInsets.only(left: 10),
+                                  //       child: Column(
+                                  //         crossAxisAlignment:
+                                  //             CrossAxisAlignment.start,
+                                  //         children: <Widget>[
+                                  //           FutureBuilder(
+                                  //             future: _assetBloc.getAssetById(
+                                  //               LoadAssetById(data[i].assetRef),
+                                  //             ),
+                                  //             builder: (context, snapshot) {
+                                  //               final state =
+                                  //                   snapshot.connectionState;
+                                  //               if (state ==
+                                  //                   ConnectionState.done) {
+                                  //                 final assetCode =
+                                  //                     snapshot.data!.assetCode;
+                                  //                 return Text(
+                                  //                   assetCode,
+                                  //                   overflow:
+                                  //                       TextOverflow.ellipsis,
+                                  //                   style: const TextStyle(
+                                  //                     fontWeight:
+                                  //                         FontWeight.bold,
+                                  //                   ),
+                                  //                 );
+                                  //               }
+                                  //               return const Text('Loading...');
+                                  //             },
+                                  //           ),
+                                  //           data[i].endedAt == null
+                                  //               ? const Text(
+                                  //                   'Đang mượn',
+                                  //                   style: TextStyle(
+                                  //                     color: Colors.red,
+                                  //                     fontWeight:
+                                  //                         FontWeight.bold,
+                                  //                   ),
+                                  //                 )
+                                  //               : Text(
+                                  //                   'Đã trả (${DateFormat('dd/MM/yyyy - HH:mm').format(data[i].endedAt!)})',
+                                  //                   style: const TextStyle(
+                                  //                     color: Colors.green,
+                                  //                     fontWeight:
+                                  //                         FontWeight.bold,
+                                  //                   ),
+                                  //                 ),
+                                  //           Text(
+                                  //             DateFormat('dd/MM/yyyy - HH:mm')
+                                  //                 .format(data[i].createdAt),
+                                  //           ),
+                                  //           Row(
+                                  //             children: [
+                                  //               Text(
+                                  //                 data[i].employee,
+                                  //               ),
+                                  //               data[i].endedAt == null
+                                  //                   ? Padding(
+                                  //                       padding:
+                                  //                           const EdgeInsets
+                                  //                               .only(left: 6),
+                                  //                       child: GestureDetector(
+                                  //                         onTap: () async {
+                                  //                           final member =
+                                  //                               await showDialog(
+                                  //                             context: context,
+                                  //                             builder:
+                                  //                                 (context) {
+                                  //                               return const ChooseMember();
+                                  //                             },
+                                  //                           );
+                                  //                           _bloc.add(TransferTo(data[i].id, data[i].assetRef, member, DateTime.now()));
+                                  //                         },
+                                  //                         child: const Icon(
+                                  //                           Icons.edit,
+                                  //                           size: 18,
+                                  //                         ),
+                                  //                       ),
+                                  //                     )
+                                  //                   : Container()
+                                  //             ],
+                                  //           ),
+                                  //         ],
+                                  //       ),
+                                  //     ),
+                                  //   ],
+                                  // ),
+                                ),
+                                i + 1 != data.length
+                                    ? Divider(height: 0.5)
+                                    : Container(),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    }
                   } else {
-                    return ListView.builder(
-                      itemCount: data.length,
-                      itemBuilder: (BuildContext context, int i) {
-                        return GestureDetector(
-                          onTap: () {
-                            _showMyDialog(data[i]);
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.only(
-                                  left: 20,
-                                  top: 20,
-                                  right: 20,
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Image.network(
-                                      'https://th.bing.com/th/id/OIP.45KbsvbD4r8MERxBWJbCgwHaHa?pid=ImgDet&rs=1',
-                                      height: 100,
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 10),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          FutureBuilder(
-                                            future: _assetBloc.getAssetById(
-                                              LoadAssetById(data[i].assetRef),
-                                            ),
-                                            builder: (context, snapshot) {
-                                              final state =
-                                                  snapshot.connectionState;
-                                              if (state ==
-                                                  ConnectionState.done) {
-                                                final assetCode =
-                                                    snapshot.data!.assetCode;
-                                                return Text(
-                                                  assetCode,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                );
-                                              }
-                                              return const Text('Loading...');
-                                            },
-                                          ),
-                                          data[i].endedAt == null
-                                              ? const Text(
-                                                  'Đang mượn',
-                                                  style: TextStyle(
-                                                    color: Colors.red,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                )
-                                              : Text(
-                                                  'Đã trả (${DateFormat('dd/MM/yyyy - HH:mm').format(data[i].endedAt!)})',
-                                                  style: const TextStyle(
-                                                    color: Colors.green,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                          Text(
-                                            DateFormat('dd/MM/yyyy - HH:mm')
-                                                .format(data[i].createdAt),
-                                          ),
-                                          Text(
-                                            data[i].employee,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              i + 1 != data.length
-                                  ? Divider(height: 0.5)
-                                  : Container(),
-                            ],
-                          ),
-                        );
-                      },
+                    return const Center(
+                      child: Text(
+                        'Đã có lỗi xảy ra. Vui lòng liên hệ LongTH20!',
+                      ),
                     );
                   }
-                } else {
-                  return const Center(
-                    child: Text(
-                      'Đã có lỗi xảy ra. Vui lòng liên hệ LongTH20!',
-                    ),
-                  );
-                }
-              },
+                },
+              ),
             ),
             floatingActionButton: Column(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -330,7 +426,11 @@ class _MyBookingState extends State<MyBooking> {
       );
       if (asset != null) {
         final bookings = await _bloc.getBooking(
-          LoadBooking(_current(_selectedIndex), asset: asset),
+          LoadBooking(
+            _current(_selectedIndex),
+            asset: asset,
+            filter: _filterItem.value,
+          ),
         );
         final noBookingInToday = bookings.isEmpty;
 
@@ -344,11 +444,13 @@ class _MyBookingState extends State<MyBooking> {
           _bloc.add(
             ReqBooking(
               name: member,
-              assetRef: 'assets/${asset.id}',
+              assetRef: !kReleaseMode
+                  ? 'assets-dev/${asset.id}'
+                  : 'assets/${asset.id}',
             ),
           );
         } else {
-          _showMyDialog(bookings[0]);
+          _showConfirmed(bookings[0]);
         }
       }
     } else {
@@ -376,16 +478,17 @@ class _MyBookingState extends State<MyBooking> {
 
         _bloc.add(
           ReqBooking(
-            createdAt: _current(_selectedIndex),
             name: member,
-            assetRef: 'assets/${(asset as Asset).id}',
+            assetRef: !kReleaseMode
+                ? 'assets-dev/${(asset as Asset).id}'
+                : 'assets/${(asset as Asset).id}',
           ),
         );
       }
     }
   }
 
-  _showMyDialog(Booking booking) async {
+  _showConfirmed(Booking booking) async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -433,20 +536,6 @@ class _MyBookingState extends State<MyBooking> {
             TextButton(
               child: Text(booking.endedAt == null ? 'Trả' : 'Huỷ Trả'),
               onPressed: () {
-                // if (booking.endedAt != null) {
-                //   final date1 = DateTime(
-                //     booking.endedAt!.year,
-                //     booking.endedAt!.month,
-                //     booking.endedAt!.day,
-                //   );
-                //   final date2 = DateTime(
-                //     DateTime.now().year,
-                //     DateTime.now().month,
-                //     DateTime.now().day,
-                //   );
-                //
-                //
-                // }
                 _bloc.add(ReturnBooking(
                   booking.id,
                   endedAt: booking.endedAt == null ? DateTime.now() : null,

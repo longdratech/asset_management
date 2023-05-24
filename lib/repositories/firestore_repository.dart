@@ -1,5 +1,6 @@
 import 'package:assets_management/models/json_map.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 
 class FirestoreRepository {
   static final FirestoreRepository _singleton = FirestoreRepository._internal();
@@ -11,6 +12,9 @@ class FirestoreRepository {
   FirestoreRepository._internal();
 
   CollectionReference<Map<String, dynamic>> collection(String collectionPath) {
+    if(!kReleaseMode) {
+      collectionPath = '$collectionPath-dev';
+    }
     return FirebaseFirestore.instance.collection(collectionPath);
   }
 
@@ -18,6 +22,9 @@ class FirestoreRepository {
     String collectionPath,
     dynamic data,
   ) async {
+    if(!kReleaseMode) {
+      collectionPath = '$collectionPath-dev';
+    }
     return await FirebaseFirestore.instance
         .collection(collectionPath)
         .add(data);

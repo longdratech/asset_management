@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../blocs/booking/booking_event.dart';
+import '../enums/filter_booking.dart';
 import '../models/booking.dart';
 import '../models/json_map.dart';
 import 'firestore_repository.dart';
@@ -16,7 +17,7 @@ class BookingRepository {
 
   BookingRepository._internal();
 
-  Query<Map<String, dynamic>> collection() {
+  CollectionReference<Map<String, dynamic>> collection() {
     return _firestore.collection(path);
   }
 
@@ -30,10 +31,14 @@ class BookingRepository {
         .where('createdAt', isLessThanOrEqualTo: end);
   }
 
-  Stream<List<DocumentSnapshot>> selectAll({
-    required DateTime datetime,
-  }) {
-    return collectionByTime(datetime).snapshots().map((snapshot) {
+  Stream<List<DocumentSnapshot>> selectAll(LoadBooking query) {
+    return collectionByTime(query.createdAt)
+        .orderBy(
+          "createdAt",
+          descending: true,
+        )
+        .snapshots()
+        .map((snapshot) {
       return snapshot.docs;
     });
   }
