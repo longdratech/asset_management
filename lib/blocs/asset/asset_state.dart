@@ -34,4 +34,8 @@ class AssetAdded extends AssetState {
   const AssetAdded(this.asset);
 }
 
-class AssetFailure extends AssetState {}
+class AssetFailure extends AssetState {
+  final String error;
+
+  const AssetFailure(this.error);
+}

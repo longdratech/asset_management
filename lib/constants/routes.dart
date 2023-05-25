@@ -6,6 +6,7 @@ import '../screens/assets/add_asset.dart';
 import '../screens/assets/asset_detail.dart';
 import '../screens/profile/profile_screen.dart';
 
+const String signIn = '/sign-in';
 const String home = '/';
 const String myAssets = '/assets';
 const String addAsset = '/add-asset';
@@ -18,7 +19,7 @@ class Routes {
       case home:
         return MaterialPageRoute(builder: (_) => const ProfileScreen());
       case myAssets:
-        return MaterialPageRoute(builder: (_) => AssetScreen());
+        return MaterialPageRoute(builder: (_) => const AssetScreen());
       case myAssetDetail:
         {
           final args = settings.arguments as AssetDetailArguments;

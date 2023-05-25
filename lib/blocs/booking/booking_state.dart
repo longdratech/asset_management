@@ -22,4 +22,8 @@ class BookingLoaded extends BookingState {
 }
 
 
-class BookingFailure extends BookingState {}
+class BookingFailure extends BookingState {
+  final String error;
+
+  const BookingFailure(this.error);
+}

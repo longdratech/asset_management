@@ -1,8 +1,9 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
 import 'package:assets_management/screens/assets/asset_screen.dart';
-import 'package:assets_management/screens/profile/profile_screen.dart';
 import 'package:assets_management/screens/booking/my_booking.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_ui_auth/firebase_ui_auth.dart';
+import 'package:flutter/material.dart';
 
 import 'constants/routes.dart';
 import 'firebase_options.dart';
@@ -20,13 +21,38 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final providers = [EmailAuthProvider()];
+
     return MaterialApp(
       title: 'AppLocalizations.of(context).helloWorld',
       theme: ThemeData(
         useMaterial3: true,
       ),
-      initialRoute: '/',
+      initialRoute: FirebaseAuth.instance.currentUser == null ? signIn : home,
       onGenerateRoute: Routes.generateRoute,
+      routes: {
+        '/sign-in': (context) {
+          return SignInScreen(
+            providers: providers,
+            actions: [
+              AuthStateChangeAction<SignedIn>((context, state) {
+                Navigator.pushReplacementNamed(context, home);
+              }),
+            ],
+          );
+        },
+        '/profile': (context) {
+          return ProfileScreen(
+            providers: providers,
+            actions: [
+              SignedOutAction((context) {
+                Navigator.pushReplacementNamed(context, '/sign-in');
+              }),
+            ],
+          );
+
+        },
+      },
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
@@ -60,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   static final List<Widget> _screens = <Widget>[
     const MyBooking(),
-    AssetScreen(),
+    const AssetScreen(),
     const ProfileScreen(),
   ];
 

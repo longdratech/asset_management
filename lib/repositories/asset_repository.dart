@@ -45,41 +45,58 @@ class AssetRepository {
   }
 
   Future<Asset> addOne(Asset asset) async {
-    final added = await _firestore.collection(path).add(asset.toFirestore());
-    return Asset.fromFirestore(await added.get());
+    try {
+      final added = await _firestore.collection(path).add(asset.toFirestore());
+      return Asset.fromFirestore(await added.get());
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<void> updateOne(Asset asset) async {
-    return await _firestore
-        .collection(path)
-        .doc(asset.id)
-        .update(asset.toFirestore());
+    try {
+      return await _firestore
+          .collection(path)
+          .doc(asset.id)
+          .update(asset.toFirestore());
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<Asset> getAssetById(LoadAssetById event) async {
     final split = event.documentId.split("/");
-    final asset = await _firestore
-        .doc(split.isNotEmpty ? event.documentId : "$path/${event.documentId}")
-        .snapshots()
-        .first;
-    return Asset.fromFirestore(asset);
+    try {
+      final asset = await _firestore
+          .doc(
+              split.isNotEmpty ? event.documentId : "$path/${event.documentId}")
+          .snapshots()
+          .first;
+      return Asset.fromFirestore(asset);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<List<Asset>?> getAssets(LoadAsset event) async {
-    List<Asset> assets = [];
-    final ref = await collection()
-        .where('assetCode', isEqualTo: event.assetCode?.toUpperCase())
-        .get();
-    if (ref.docs.isNotEmpty) {
-      for (final doc in ref.docs) {
-        assets.add(
-          Asset.fromFirestore(
-            await _firestore.collection(path).doc(doc.id).get(),
-          ),
-        );
+    try {
+      List<Asset> assets = [];
+      final ref = await collection()
+          .where('assetCode', isEqualTo: event.assetCode?.toUpperCase())
+          .get();
+      if (ref.docs.isNotEmpty) {
+        for (final doc in ref.docs) {
+          assets.add(
+            Asset.fromFirestore(
+              await _firestore.collection(path).doc(doc.id).get(),
+            ),
+          );
+        }
+        return assets;
       }
-      return assets;
+      return null;
+    } catch (e) {
+      rethrow;
     }
-    return null;
   }
 }

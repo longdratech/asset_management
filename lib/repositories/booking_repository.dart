@@ -48,27 +48,39 @@ class BookingRepository {
   }
 
   Future<DocumentReference> requestAsset(Booking data) async {
-    return await _firestore.addDocument(path, data);
+    try {
+      return await _firestore.addDocument(path, data);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future getDocumentBy({
     required DateTime datetime,
     required String assetCode,
   }) async {
-    return collectionByTime(datetime)
-        .where("assetCode", isEqualTo: assetCode)
-        .limit(1)
-        .get();
+    try {
+      return await collectionByTime(datetime)
+          .where("assetCode", isEqualTo: assetCode)
+          .limit(1)
+          .get();
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<Booking> addOne(ReqBooking reqBooking) async {
-    final a = await _firestore.collection(path).add({
-      "asset": reqBooking.assetRef,
-      "createdAt": reqBooking.createdAt ?? Timestamp.now(),
-      "employee": reqBooking.name,
-      "endedAt": null
-    });
+    try {
+      final a = await _firestore.collection(path).add({
+        "asset": reqBooking.assetRef,
+        "createdAt": reqBooking.createdAt ?? Timestamp.now(),
+        "employee": reqBooking.name,
+        "endedAt": null
+      });
 
-    return Booking.fromDocumentSnapshot(await a.get());
+      return Booking.fromDocumentSnapshot(await a.get());
+    } catch (e) {
+      rethrow;
+    }
   }
 }

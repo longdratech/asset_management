@@ -30,9 +30,12 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
 
   @override
   void initState() {
-    _assetCodeController = TextEditingController(text: widget.args.asset.assetCode);
-    _modelNameController = TextEditingController(text: widget.args.asset.modelName);
-    _serialNumberController = TextEditingController(text: widget.args.asset.serialNumber);
+    _assetCodeController =
+        TextEditingController(text: widget.args.asset.assetCode);
+    _modelNameController =
+        TextEditingController(text: widget.args.asset.modelName);
+    _serialNumberController =
+        TextEditingController(text: widget.args.asset.serialNumber);
     _typeController = TextEditingController(text: widget.args.asset.type);
     super.initState();
   }
@@ -108,14 +111,15 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 25),
                 child: ElevatedButton(
-                  onPressed: () async {
+                  onPressed: () {
                     final assetCode = _assetCodeController.text;
                     final modelName = _modelNameController.text;
                     final serialNumber = _serialNumberController.text;
                     final type = _typeController.text;
 
-                    if(widget.args.asset.id != null) {
-                      await _bloc.onUpdate(
+                    if (widget.args.asset.id != null) {
+                      _bloc
+                          .onUpdate(
                         Asset(
                           id: widget.args.asset.id,
                           assetCode: assetCode,
@@ -123,18 +127,29 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                           serialNumber: serialNumber,
                           type: type,
                         ),
-                      );
-                      Navigator.pop(context);
+                      ).catchError((err) {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(SnackBar(content: Text(err)));
+                      })
+                          .then((value) {
+                        Navigator.pop(context);
+                      });
                     } else {
-                      final asset = await _bloc.onAdd(
+                      _bloc
+                          .onAdd(
                         AddAsset(
                           assetCode: widget.args.asset.assetCode,
                           modelName: modelName,
                           serialNumber: serialNumber,
                           type: type,
                         ),
-                      );
-                      Navigator.pop(context, asset);
+                      )
+                          .catchError((err) {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(SnackBar(content: Text(err)));
+                      }).then((asset) {
+                        Navigator.pop(context, asset);
+                      });
                     }
                   },
                   child: const Center(child: Text('Thêm')),

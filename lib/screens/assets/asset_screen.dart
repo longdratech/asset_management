@@ -49,6 +49,8 @@ class _AssetScreenState extends State<AssetScreen> {
             builder: (ctx, state) {
               if (state is AssetLoading) {
                 return const Center(child: Text('Loading...'));
+              } else if (state is AssetFailure) {
+                return Center(child: Text(state.error));
               } else if (state is AssetLoaded) {
                 final assets = state.assets;
                 return assets.isNotEmpty
