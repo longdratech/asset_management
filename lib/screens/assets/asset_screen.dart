@@ -2,6 +2,7 @@ import 'package:assets_management/blocs/asset/asset_bloc.dart';
 import 'package:assets_management/blocs/asset/asset_event.dart';
 import 'package:assets_management/blocs/asset/asset_state.dart';
 import 'package:assets_management/constants/routes.dart';
+import 'package:assets_management/models/asset.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,10 +10,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'add_asset.dart';
 import 'asset_detail.dart';
 
-class AssetScreen extends StatelessWidget {
-  AssetScreen({super.key});
+class AssetScreen extends StatefulWidget {
+  const AssetScreen({super.key});
 
+  @override
+  State<AssetScreen> createState() => _AssetScreenState();
+}
+
+class _AssetScreenState extends State<AssetScreen> {
   final bloc = AssetBloc();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +46,7 @@ class AssetScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           child: BlocBuilder<AssetBloc, AssetState>(
             bloc: bloc..add(const LoadAsset()),
-            builder: (context, state) {
+            builder: (ctx, state) {
               if (state is AssetLoading) {
                 return const Center(child: Text('Loading...'));
               } else if (state is AssetLoaded) {
@@ -46,9 +57,21 @@ class AssetScreen extends StatelessWidget {
                           return ListTile(
                             title: Text(asset.assetCode),
                             subtitle: Text(asset.modelName ?? "N/A"),
-                            trailing: Text(asset.type),
+                            trailing: Text(asset.type ?? "N/A"),
                             onTap: () {
-                              // Navigator.pushNamed(context, myAssetDetail);
+                              Navigator.pushNamed(
+                                context,
+                                addAsset,
+                                arguments: AddAssetArguments(
+                                  Asset(
+                                    id: asset.id,
+                                    modelName: asset.modelName,
+                                    serialNumber: asset.serialNumber,
+                                    assetCode: asset.assetCode,
+                                    type: asset.type,
+                                  ),
+                                ),
+                              );
                             },
                           );
                         }).toList(),
@@ -68,14 +91,14 @@ class AssetScreen extends StatelessWidget {
             child: FloatingActionButton(
               heroTag: "text",
               onPressed: () async {
-                final _controller = TextEditingController();
+                final controller = TextEditingController();
                 await showDialog(
                   context: context,
-                  builder: (BuildContext context) {
+                  builder: (BuildContext ctx) {
                     return AlertDialog(
                       title: const Text('Nhập mã tài sản'),
                       content: TextField(
-                        controller: _controller,
+                        controller: controller,
                       ),
                       actions: <Widget>[
                         TextButton(
@@ -93,11 +116,11 @@ class AssetScreen extends StatelessWidget {
                           ),
                           child: const Text('Xác nhận'),
                           onPressed: () async {
-                            final assetCode = _controller.text;
+                            final assetCode = controller.text;
                             if (assetCode.isNotEmpty) {
-                              _process(context, _controller.text);
+                              _process(context, controller.text);
                             }
-                            _controller.clear();
+                            controller.clear();
                             Navigator.of(context).pop();
                           },
                         ),
@@ -119,7 +142,7 @@ class AssetScreen extends StatelessWidget {
               );
 
               if (assetCode != "-1") {
-                await _process(context, assetCode);
+                _process(context, assetCode);
               }
             },
             child: const Icon(Icons.camera_alt_outlined),
@@ -129,15 +152,18 @@ class AssetScreen extends StatelessWidget {
     );
   }
 
-  _process(BuildContext context, String assetCode) async {
-    final asset = await bloc.getAssets(LoadAsset(assetCode: assetCode));
-
-    if (asset == null) {
-      Navigator.of(context)
-          .pushNamed(addAsset, arguments: AddAssetArguments(assetCode));
-    } else {
-      Navigator.of(context)
-          .pushNamed(myAssetDetail, arguments: AssetDetailArguments(assetCode));
-    }
+  _process(BuildContext context, String assetCode) {
+    bloc.getAssets(LoadAsset(assetCode: assetCode)).then((asset) {
+      if (asset == null) {
+        Navigator.of(context).pushNamed(
+          addAsset,
+          arguments: AddAssetArguments(Asset(assetCode: assetCode)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tài sản đã tồn tại!')),
+        );
+      }
+    });
   }
 }

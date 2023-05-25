@@ -9,7 +9,7 @@ class Asset {
     this.pictures,
     this.modelName,
     this.serialNumber,
-    required this.type,
+    this.type,
   });
 
   final String? id;
@@ -17,7 +17,7 @@ class Asset {
   final List<String>? pictures;
   final String? modelName;
   final String? serialNumber;
-  final String type;
+  final String? type;
 
   factory Asset.fromFirestore(DocumentSnapshot snapshot) {
     final data = snapshot.data() as JsonMap;

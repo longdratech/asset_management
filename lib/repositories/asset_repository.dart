@@ -49,6 +49,13 @@ class AssetRepository {
     return Asset.fromFirestore(await added.get());
   }
 
+  Future<void> updateOne(Asset asset) async {
+    return await _firestore
+        .collection(path)
+        .doc(asset.id)
+        .update(asset.toFirestore());
+  }
+
   Future<Asset> getAssetById(LoadAssetById event) async {
     final split = event.documentId.split("/");
     final asset = await _firestore
@@ -61,7 +68,7 @@ class AssetRepository {
   Future<List<Asset>?> getAssets(LoadAsset event) async {
     List<Asset> assets = [];
     final ref = await collection()
-        .where('assetCode', isGreaterThanOrEqualTo: event.assetCode)
+        .where('assetCode', isEqualTo: event.assetCode?.toUpperCase())
         .get();
     if (ref.docs.isNotEmpty) {
       for (final doc in ref.docs) {

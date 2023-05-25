@@ -465,7 +465,7 @@ class _MyBookingState extends State<MyBooking> {
       final asset = await Navigator.pushNamed(
         context,
         addAsset,
-        arguments: AddAssetArguments(assetCode),
+        arguments: AddAssetArguments(Asset(assetCode: assetCode)),
       );
 
       if (asset != null) {

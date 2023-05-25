@@ -1,30 +1,47 @@
 import 'package:assets_management/blocs/asset/asset_bloc.dart';
 import 'package:assets_management/blocs/asset/asset_event.dart';
+import 'package:assets_management/models/asset.dart';
 import 'package:flutter/material.dart';
 
 class AddAssetArguments {
-  final String assetCode;
+  final Asset asset;
 
-  AddAssetArguments(this.assetCode);
+  AddAssetArguments(this.asset);
 }
 
-class AddAssetScreen extends StatelessWidget {
+class AddAssetScreen extends StatefulWidget {
   final AddAssetArguments args;
 
   AddAssetScreen(this.args, {super.key});
 
+  @override
+  State<AddAssetScreen> createState() => _AddAssetScreenState();
+}
+
+class _AddAssetScreenState extends State<AddAssetScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _modelNameController = TextEditingController();
-  final _serialNumberController = TextEditingController();
-  final _typeController = TextEditingController();
+
+  late TextEditingController _assetCodeController;
+  late TextEditingController _modelNameController;
+  late TextEditingController _serialNumberController;
+  late TextEditingController _typeController;
 
   final _bloc = AssetBloc();
+
+  @override
+  void initState() {
+    _assetCodeController = TextEditingController(text: widget.args.asset.assetCode);
+    _modelNameController = TextEditingController(text: widget.args.asset.modelName);
+    _serialNumberController = TextEditingController(text: widget.args.asset.serialNumber);
+    _typeController = TextEditingController(text: widget.args.asset.type);
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Thêm tài sản mới',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
@@ -37,8 +54,17 @@ class AddAssetScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextFormField(
-                enabled: false,
-                initialValue: args.assetCode,
+                controller: _assetCodeController,
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Mã sản phẩm',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter some text';
+                  }
+                  return null;
+                },
               ),
               TextFormField(
                 controller: _modelNameController,
@@ -83,26 +109,33 @@ class AddAssetScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 25),
                 child: ElevatedButton(
                   onPressed: () async {
-                    // Validate returns true if the form is valid, or false otherwise.
-                    // if (_formKey.currentState!.validate()) {
-                    //   ScaffoldMessenger.of(context).showSnackBar(
-                    //     const SnackBar(content: Text('Processing Data')),
-                    //   );
-                    // }
-                    // print(_formKey.currentState.save());
-                    String modelName = _modelNameController.text;
-                    String serialNumber = _serialNumberController.text;
-                    String type = _typeController.text;
+                    final assetCode = _assetCodeController.text;
+                    final modelName = _modelNameController.text;
+                    final serialNumber = _serialNumberController.text;
+                    final type = _typeController.text;
 
-                    final asset = await _bloc.onAdd(
-                      AddAsset(
-                        assetCode: args.assetCode,
-                        modelName: modelName,
-                        serialNumber: serialNumber,
-                        type: type,
-                      ),
-                    );
-                    Navigator.pop(context, asset);
+                    if(widget.args.asset.id != null) {
+                      await _bloc.onUpdate(
+                        Asset(
+                          id: widget.args.asset.id,
+                          assetCode: assetCode,
+                          modelName: modelName,
+                          serialNumber: serialNumber,
+                          type: type,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    } else {
+                      final asset = await _bloc.onAdd(
+                        AddAsset(
+                          assetCode: widget.args.asset.assetCode,
+                          modelName: modelName,
+                          serialNumber: serialNumber,
+                          type: type,
+                        ),
+                      );
+                      Navigator.pop(context, asset);
+                    }
                   },
                   child: const Center(child: Text('Thêm')),
                 ),

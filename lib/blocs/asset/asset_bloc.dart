@@ -45,6 +45,10 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
     );
   }
 
+  Future<void> onUpdate(Asset event) async {
+    return await _repository.updateOne(event);
+  }
+
   FutureOr<void> _onLoadById(
     LoadAssetById event,
     Emitter<AssetState> emit,
