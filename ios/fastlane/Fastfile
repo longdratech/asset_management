@@ -34,7 +34,12 @@ lane :build do
     build_app(export_method: "ad-hoc")
 end
 
+lane :increment_version_number do
+    increment_version_number(version_number: "1.4.0")
+end
+
 lane :distribute do
+    increment_version_number
     build
     firebase_app_distribution(
         app: firebase_app_id,
