@@ -40,7 +40,7 @@ class ItemBooking extends StatelessWidget {
                   if (state == ConnectionState.done) {
                     final data = snapshot.data;
                     return Text(
-                      "${data?.modelName != null && data?.modelName != "" ? data?.modelName : "N/A"} (${data?.assetCode ?? 'N/A'})",
+                      "${data?.modelName != null && data?.modelName != "" ? data?.modelName : "N/A"} (${data?.assetCode != null && data?.assetCode != "" ? data!.assetCode : 'N/A'})",
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,

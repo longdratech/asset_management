@@ -25,6 +25,7 @@ import '../../constants/bookings_filter.dart';
 import '../../models/asset.dart';
 import '../../repositories/firestore_repository.dart';
 import '../assets/add_asset.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class MyBooking extends StatefulWidget {
   const MyBooking({super.key});
@@ -78,201 +79,206 @@ class _MyBookingState extends State<MyBooking> {
             filter: _filterItem.value,
           )),
         child: Scaffold(
-            appBar: AppBar(
-              centerTitle: true,
-              scrolledUnderElevation: 5,
-              shadowColor: Colors.grey,
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(30),
-                child: TabBar(
-                  isScrollable: true,
-                  indicatorColor: Colors.white,
-                  onTap: (index) {
-                    _selectedIndex = index;
-                    _bloc.add(LoadBooking(
-                      _current(index),
-                      filter: _filterItem.value,
-                      member: _filterByName,
-                    ));
+          appBar: AppBar(
+            centerTitle: true,
+            scrolledUnderElevation: 5,
+            shadowColor: Colors.grey,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(30),
+              child: TabBar(
+                isScrollable: true,
+                indicatorColor: Colors.white,
+                onTap: (index) {
+                  _selectedIndex = index;
+                  _bloc.add(LoadBooking(
+                    _current(index),
+                    filter: _filterItem.value,
+                    member: _filterByName,
+                  ));
+                },
+                tabs: datetime.map(
+                  (e) {
+                    return Tab(
+                      child: Text(e),
+                    );
                   },
-                  tabs: datetime.map(
-                    (e) {
-                      return Tab(
-                        child: Text(e),
-                      );
-                    },
-                  ).toList(),
-                ),
+                ).toList(),
               ),
             ),
-            body: Scaffold(
-              appBar: AppBar(
-                title: Align(
-                  alignment: Alignment.topRight,
-                  child: Wrap(
-                    direction: Axis.horizontal,
-                    runSpacing: 20,
-                    spacing: 20,
-                    children: [
-                      SelectMember(
-                        hint: 'Lọc theo tên',
-                        showAll: true,
-                        onChanged: (String member) {
-                          _filterByName = member;
-                          _bloc.add(LoadBooking(
-                            _current(_selectedIndex),
-                            filter: _filterItem.value,
-                            member: _filterByName,
-                          ));
-                        },
-                      ),
-                      NewestFilter(onChanged: (value) {
+          ),
+          body: Scaffold(
+            appBar: AppBar(
+              title: Align(
+                alignment: Alignment.topRight,
+                child: Wrap(
+                  direction: Axis.horizontal,
+                  runSpacing: 20,
+                  spacing: 20,
+                  children: [
+                    SelectMember(
+                      hint: 'Lọc theo tên',
+                      showAll: true,
+                      onChanged: (String member) {
+                        _filterByName = member;
                         _bloc.add(LoadBooking(
                           _current(_selectedIndex),
                           filter: _filterItem.value,
+                          member: _filterByName,
                         ));
-                      }),
-                    ],
-                  ),
+                      },
+                    ),
+                    NewestFilter(onChanged: (value) {
+                      _bloc.add(LoadBooking(
+                        _current(_selectedIndex),
+                        filter: _filterItem.value,
+                      ));
+                    }),
+                  ],
                 ),
-              ),
-              body: BlocBuilder<BookingBloc, BookingState>(
-                builder: (context, state) {
-                  if (state is BookingLoading) {
-                    return const Center(child: Text('Loading...'));
-                  } else if (state is BookingFailure) {
-                    return Center(child: Text(state.error));
-                  } else if (state is BookingLoaded) {
-                    final data = state.booking;
-                    if (data.isEmpty) {
-                      return const Center(child: Text('No data!'));
-                    } else {
-                      return ListView.builder(
-                        itemCount: data.length,
-                        itemBuilder: (BuildContext context, int i) {
-                          return GestureDetector(
-                            onTap: () {
-                              _showConfirmed(data[i]);
-                            },
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.only(
-                                    left: 20,
-                                    top: 20,
-                                    right: 20,
-                                  ),
-                                  child: ItemBooking(
-                                    booking: data[i],
-                                    onChangedMember: (member) {
-                                      _bloc.onTransferTo(TransferTo(
-                                        data[i].id,
-                                        data[i].assetRef,
-                                        member,
-                                        DateTime.now(),
-                                      ));
-                                    },
-                                  ),
-                                ),
-                                i + 1 != data.length
-                                    ? const Divider(height: 0.5)
-                                    : Container(),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    }
-                  } else {
-                    return const Center(
-                      child: Text(
-                        'Đã có lỗi xảy ra!',
-                      ),
-                    );
-                  }
-                },
               ),
             ),
-            floatingActionButton: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: FloatingActionButton(
-                    heroTag: "text",
-                    onPressed: () async {
-                      if (!(Platform.isAndroid || Platform.isIOS)) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Please use smart phone')));
-                      } else {
-                        await showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text('Nhập mã tài sản'),
-                              content: TextField(
-                                controller: _controller,
-                              ),
-                              actions: <Widget>[
-                                TextButton(
-                                  style: TextButton.styleFrom(
-                                    textStyle:
-                                        Theme.of(context).textTheme.labelLarge,
-                                  ),
-                                  child: const Text('Cancel'),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                                TextButton(
-                                  style: TextButton.styleFrom(
-                                    textStyle:
-                                        Theme.of(context).textTheme.labelLarge,
-                                  ),
-                                  child: const Text('Xác nhận'),
-                                  onPressed: () async {
-                                    final assetCode = _controller.text;
-                                    if (assetCode.isNotEmpty) {
-                                      _process(_controller.text);
-                                    }
-                                    _controller.clear();
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ],
-                            );
+            body: BlocBuilder<BookingBloc, BookingState>(
+              builder: (context, state) {
+                if (state is BookingLoading) {
+                  return const Center(child: Text('Loading...'));
+                } else if (state is BookingFailure) {
+                  return Center(child: Text(state.error));
+                } else if (state is BookingLoaded) {
+                  final data = state.booking;
+                  if (data.isEmpty) {
+                    return const Center(child: Text('No data!'));
+                  } else {
+                    return ListView.builder(
+                      itemCount: data.length,
+                      itemBuilder: (BuildContext context, int i) {
+                        return GestureDetector(
+                          onTap: () {
+                            _showConfirmed(data[i]);
                           },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.only(
+                                  left: 20,
+                                  top: 20,
+                                  right: 20,
+                                ),
+                                child: ItemBooking(
+                                  booking: data[i],
+                                  onChangedMember: (member) {
+                                    _bloc.onTransferTo(TransferTo(
+                                      data[i].id,
+                                      data[i].assetRef,
+                                      member,
+                                      DateTime.now(),
+                                    ));
+                                  },
+                                ),
+                              ),
+                              i + 1 != data.length
+                                  ? const Divider(height: 0.5)
+                                  : Container(),
+                            ],
+                          ),
                         );
-                      }
-                    },
-                    child: const Icon(Icons.text_fields),
-                  ),
-                ),
-                FloatingActionButton(
+                      },
+                    );
+                  }
+                } else {
+                  return const Center(
+                    child: Text(
+                      'Đã có lỗi xảy ra!',
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+          floatingActionButton: kIsWeb
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: FloatingActionButton(
+                        heroTag: "text",
+                        onPressed: () async {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Nhập mã tài sản'),
+                                content: TextField(
+                                  controller: _controller,
+                                ),
+                                actions: <Widget>[
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                      textStyle: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge,
+                                    ),
+                                    child: const Text('Cancel'),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                      textStyle: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge,
+                                    ),
+                                    child: const Text('Xác nhận'),
+                                    onPressed: () async {
+                                      final assetCode = _controller.text;
+                                      if (assetCode.isNotEmpty) {
+                                        _process(_controller.text);
+                                      }
+                                      _controller.clear();
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        child: const Icon(Icons.text_fields),
+                      ),
+                    ),
+                    FloatingActionButton(
+                      heroTag: "camera",
+                      onPressed: () async {
+                        try {
+                          String assetCode =
+                              await FlutterBarcodeScanner.scanBarcode(
+                            '#ff6666',
+                            'Cancel',
+                            true,
+                            ScanMode.QR,
+                          );
+                          if (assetCode != "-1") {
+                            _process(assetCode);
+                          }
+                        } on PlatformException {
+                          print('failure scan');
+                        }
+                      },
+                      child: const Icon(Icons.camera_alt_outlined),
+                    ),
+                  ],
+                )
+              : FloatingActionButton(
                   heroTag: "camera",
-                  onPressed: () async {
-                    try {
-                      String assetCode =
-                          await FlutterBarcodeScanner.scanBarcode(
-                        '#ff6666',
-                        'Cancel',
-                        true,
-                        ScanMode.QR,
-                      );
-                      if (assetCode != "-1") {
-                        _process(assetCode);
-                      }
-                    } on PlatformException {
-                      print('failure scan');
-                    }
+                  onPressed: ()  {
+
                   },
-                  child: const Icon(Icons.camera_alt_outlined),
+                  child: const Icon(Icons.add),
                 ),
-              ],
-            )),
+        ),
       ),
     );
   }
