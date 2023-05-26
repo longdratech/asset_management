@@ -11,7 +11,7 @@ import 'package:assets_management/widgets/asset_item.dart';
 import 'package:assets_management/widgets/booking_item.dart';
 import 'package:assets_management/widgets/newest_filter.dart';
 import 'package:assets_management/widgets/select_member.dart';
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
@@ -199,8 +199,8 @@ class _MyBookingState extends State<MyBooking> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: FloatingActionButton(
-                  heroTag: "text",
-                  onPressed: () async {
+                  heroTag: "text1",
+                  onPressed: () {
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
@@ -212,9 +212,8 @@ class _MyBookingState extends State<MyBooking> {
                           actions: <Widget>[
                             TextButton(
                               style: TextButton.styleFrom(
-                                textStyle: Theme.of(context)
-                                    .textTheme
-                                    .labelLarge,
+                                textStyle:
+                                    Theme.of(context).textTheme.labelLarge,
                               ),
                               child: const Text('Cancel'),
                               onPressed: () {
@@ -223,12 +222,11 @@ class _MyBookingState extends State<MyBooking> {
                             ),
                             TextButton(
                               style: TextButton.styleFrom(
-                                textStyle: Theme.of(context)
-                                    .textTheme
-                                    .labelLarge,
+                                textStyle:
+                                    Theme.of(context).textTheme.labelLarge,
                               ),
                               child: const Text('Xác nhận'),
-                              onPressed: () async {
+                              onPressed: () {
                                 final assetCode = _controller.text;
                                 if (assetCode.isNotEmpty) {
                                   _process(_controller.text);
@@ -242,29 +240,26 @@ class _MyBookingState extends State<MyBooking> {
                       },
                     );
                   },
-                  child: const Icon(Icons.text_fields),
+                  child: const Icon(kIsWeb ? Icons.add : Icons.text_fields),
                 ),
               ),
-              FloatingActionButton(
-                heroTag: "camera",
-                onPressed: () async {
-                  try {
-                    String assetCode =
-                    await FlutterBarcodeScanner.scanBarcode(
+              if (!kIsWeb)
+                FloatingActionButton(
+                  heroTag: "camera1",
+                  onPressed: () {
+                    FlutterBarcodeScanner.scanBarcode(
                       '#ff6666',
                       'Cancel',
                       true,
                       ScanMode.QR,
-                    );
-                    if (assetCode != "-1") {
-                      _process(assetCode);
-                    }
-                  } on PlatformException {
-                    print('failure scan');
-                  }
-                },
-                child: const Icon(Icons.camera_alt_outlined),
-              ),
+                    ).then((value) {
+                      if (value != "-1") {
+                        _process(value);
+                      }
+                    });
+                  },
+                  child: const Icon(Icons.camera_alt_outlined),
+                ),
             ],
           ),
         ),

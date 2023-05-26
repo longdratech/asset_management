@@ -4,6 +4,7 @@ import 'package:assets_management/blocs/asset/asset_state.dart';
 import 'package:assets_management/constants/routes.dart';
 import 'package:assets_management/models/asset.dart';
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -179,24 +180,25 @@ class _AssetScreenState extends State<AssetScreen> {
                   },
                 );
               },
-              child: const Icon(Icons.text_fields),
+              child: const Icon(kIsWeb ? Icons.add : Icons.text_fields),
             ),
           ),
-          FloatingActionButton(
-            onPressed: () async {
-              String assetCode = await FlutterBarcodeScanner.scanBarcode(
-                '#ff6666',
-                'Cancel',
-                true,
-                ScanMode.QR,
-              );
+          if (!kIsWeb)
+            FloatingActionButton(
+              onPressed: () async {
+                String assetCode = await FlutterBarcodeScanner.scanBarcode(
+                  '#ff6666',
+                  'Cancel',
+                  true,
+                  ScanMode.QR,
+                );
 
-              if (assetCode != "-1") {
-                _process(context, assetCode);
-              }
-            },
-            child: const Icon(Icons.camera_alt_outlined),
-          ),
+                if (assetCode != "-1") {
+                  _process(context, assetCode);
+                }
+              },
+              child: const Icon(Icons.camera_alt_outlined),
+            ),
         ],
       ),
     );
