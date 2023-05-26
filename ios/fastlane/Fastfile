@@ -35,15 +35,22 @@ lane :build do
 end
 
 lane :increment_version_number do
-    increment_version_number(version_number: "1.4.0")
+    increment_version_number(
+      version_number: "1.4.0"
+    )
 end
 
 lane :distribute do
-    increment_version_number
     build
     firebase_app_distribution(
         app: firebase_app_id,
-        release_notes: "Try out this app!",
+        release_notes: "
+         Features:
+          - Add booking/asset from web
+          - Add signIn/Profile screen
+          - Add filter booking by member
+          - Add role/permission
+        ",
         testers: app_testers.join(","),
     )
 end
