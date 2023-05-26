@@ -25,7 +25,6 @@ import '../../constants/bookings_filter.dart';
 import '../../models/asset.dart';
 import '../../repositories/firestore_repository.dart';
 import '../assets/add_asset.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class MyBooking extends StatefulWidget {
   const MyBooking({super.key});
@@ -196,88 +195,80 @@ class _MyBookingState extends State<MyBooking> {
               },
             ),
           ),
-          floatingActionButton: kIsWeb
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: FloatingActionButton(
-                        heroTag: "text",
-                        onPressed: () async {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text('Nhập mã tài sản'),
-                                content: TextField(
-                                  controller: _controller,
-                                ),
-                                actions: <Widget>[
-                                  TextButton(
-                                    style: TextButton.styleFrom(
-                                      textStyle: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge,
-                                    ),
-                                    child: const Text('Cancel'),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                  TextButton(
-                                    style: TextButton.styleFrom(
-                                      textStyle: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge,
-                                    ),
-                                    child: const Text('Xác nhận'),
-                                    onPressed: () async {
-                                      final assetCode = _controller.text;
-                                      if (assetCode.isNotEmpty) {
-                                        _process(_controller.text);
-                                      }
-                                      _controller.clear();
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                        child: const Icon(Icons.text_fields),
-                      ),
-                    ),
-                    FloatingActionButton(
-                      heroTag: "camera",
-                      onPressed: () async {
-                        try {
-                          String assetCode =
-                              await FlutterBarcodeScanner.scanBarcode(
-                            '#ff6666',
-                            'Cancel',
-                            true,
-                            ScanMode.QR,
-                          );
-                          if (assetCode != "-1") {
-                            _process(assetCode);
-                          }
-                        } on PlatformException {
-                          print('failure scan');
-                        }
+          floatingActionButton: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: FloatingActionButton(
+                  heroTag: "text",
+                  onPressed: () async {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Nhập mã tài sản'),
+                          content: TextField(
+                            controller: _controller,
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                textStyle: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge,
+                              ),
+                              child: const Text('Cancel'),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                textStyle: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge,
+                              ),
+                              child: const Text('Xác nhận'),
+                              onPressed: () async {
+                                final assetCode = _controller.text;
+                                if (assetCode.isNotEmpty) {
+                                  _process(_controller.text);
+                                }
+                                _controller.clear();
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        );
                       },
-                      child: const Icon(Icons.camera_alt_outlined),
-                    ),
-                  ],
-                )
-              : FloatingActionButton(
-                  heroTag: "camera",
-                  onPressed: ()  {
-
+                    );
                   },
-                  child: const Icon(Icons.add),
+                  child: const Icon(Icons.text_fields),
                 ),
+              ),
+              FloatingActionButton(
+                heroTag: "camera",
+                onPressed: () async {
+                  try {
+                    String assetCode =
+                    await FlutterBarcodeScanner.scanBarcode(
+                      '#ff6666',
+                      'Cancel',
+                      true,
+                      ScanMode.QR,
+                    );
+                    if (assetCode != "-1") {
+                      _process(assetCode);
+                    }
+                  } on PlatformException {
+                    print('failure scan');
+                  }
+                },
+                child: const Icon(Icons.camera_alt_outlined),
+              ),
+            ],
+          ),
         ),
       ),
     );
