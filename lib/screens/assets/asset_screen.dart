@@ -3,6 +3,7 @@ import 'package:assets_management/blocs/asset/asset_event.dart';
 import 'package:assets_management/blocs/asset/asset_state.dart';
 import 'package:assets_management/constants/routes.dart';
 import 'package:assets_management/models/asset.dart';
+import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -56,25 +57,72 @@ class _AssetScreenState extends State<AssetScreen> {
                 return assets.isNotEmpty
                     ? ListView(
                         children: assets.map<Widget>((asset) {
-                          return ListTile(
-                            title: Text(asset.assetCode),
-                            subtitle: Text(asset.modelName ?? "N/A"),
-                            trailing: Text(asset.type ?? "N/A"),
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                addAsset,
-                                arguments: AddAssetArguments(
-                                  Asset(
-                                    id: asset.id,
-                                    modelName: asset.modelName,
-                                    serialNumber: asset.serialNumber,
-                                    assetCode: asset.assetCode,
-                                    type: asset.type,
-                                  ),
-                                ),
+                          return Dismissible(
+                            key: Key(asset.id ?? asset.assetCode),
+                            background: Container(color: Colors.red),
+                            confirmDismiss: (v) async {
+                              return await showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text("Xác nhận xóa tài sản"),
+                                    content: Text(
+                                      "Bạn có chắc chắn muốn xóa tải sản ${asset.modelName} (${asset.assetCode}) ra khỏi danh sách này chứ?",
+                                    ),
+                                    actions: <Widget>[
+                                      OutlinedButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(),
+                                        child: const Text("Hủy bỏ"),
+                                      ),
+                                      OutlinedButton(
+                                        onPressed: () {
+                                          bloc
+                                              .onRemoveOne(asset.id!)
+                                              .then((value) {
+                                            Navigator.of(context).pop();
+                                          }).catchError((err) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(SnackBar(
+                                                    content: Text(err)));
+                                          });
+                                        },
+                                        child: const Text("Xác nhận"),
+                                      ),
+                                    ],
+                                  );
+                                },
                               );
                             },
+                            onDismissed: (direction) {
+                              setState(() {
+                                assets.remove(asset);
+                              });
+
+                              // Then show a snackbar.
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('$asset dismissed')));
+                            },
+                            child: ListTile(
+                              title: Text(asset.assetCode),
+                              subtitle: Text(asset.modelName ?? "N/A"),
+                              trailing: Text(asset.type ?? "N/A"),
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  addAsset,
+                                  arguments: AddAssetArguments(
+                                    Asset(
+                                      id: asset.id,
+                                      modelName: asset.modelName,
+                                      serialNumber: asset.serialNumber,
+                                      assetCode: asset.assetCode,
+                                      type: asset.type,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           );
                         }).toList(),
                       )

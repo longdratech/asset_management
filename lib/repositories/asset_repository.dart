@@ -22,6 +22,7 @@ class AssetRepository {
   Stream<List<Asset>> selectAll(LoadAsset event) {
     return collection()
         .where("assetCode", isEqualTo: event.assetCode)
+        .where("deletedAt", isNull: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs;
@@ -59,6 +60,17 @@ class AssetRepository {
           .collection(path)
           .doc(asset.id)
           .update(asset.toFirestore());
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> removeOne(String id) async {
+    try {
+      return await _firestore
+          .collection(path)
+          .doc(id)
+          .update({'id': id, 'deletedAt': DateTime.now()});
     } catch (e) {
       rethrow;
     }

@@ -37,6 +37,7 @@ class Asset {
       "modelName": modelName,
       if (serialNumber != null) "serialNumber": serialNumber,
       "type": type,
+      "deletedAt": null,
     };
   }
 }

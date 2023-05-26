@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart' show kReleaseMode;
 
 class FirestoreRepository {
   static final FirestoreRepository _singleton = FirestoreRepository._internal();
-
+  bool releaseMode = kReleaseMode;
   factory FirestoreRepository() {
     return _singleton;
   }
@@ -12,7 +12,7 @@ class FirestoreRepository {
   FirestoreRepository._internal();
 
   CollectionReference<Map<String, dynamic>> collection(String collectionPath) {
-    if(!kReleaseMode) {
+    if(!releaseMode) {
       collectionPath = '$collectionPath-dev';
     }
     return FirebaseFirestore.instance.collection(collectionPath);
@@ -22,7 +22,7 @@ class FirestoreRepository {
     String collectionPath,
     dynamic data,
   ) async {
-    if(!kReleaseMode) {
+    if(!releaseMode) {
       collectionPath = '$collectionPath-dev';
     }
     return await FirebaseFirestore.instance

@@ -39,4 +39,8 @@ class AddAsset extends AssetEvent {
   });
 }
 
-class RemoveAsset extends AssetEvent {}
+class RemoveAsset extends AssetEvent {
+  final String id;
+
+  const RemoveAsset(this.id);
+}

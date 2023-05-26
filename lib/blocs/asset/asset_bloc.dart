@@ -65,6 +65,14 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
     }
   }
 
+  Future<void> onRemoveOne(String id) async {
+    try {
+      return await _repository.removeOne(id);
+    } catch (e) {
+      throw (e as FirebaseException).message ?? 'Đã có lỗi xảy ra!';
+    }
+  }
+
   FutureOr<void> _onLoadById(
     LoadAssetById event,
     Emitter<AssetState> emit,
