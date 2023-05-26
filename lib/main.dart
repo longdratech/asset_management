@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AppLocalizations.of(context).helloWorld',
+      title: 'Canon Asset Management',
       theme: ThemeData(
         useMaterial3: true,
       ),
