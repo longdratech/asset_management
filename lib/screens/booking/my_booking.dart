@@ -116,6 +116,7 @@ class _MyBookingState extends State<MyBooking> {
                     children: [
                       SelectMember(
                         hint: 'Lọc theo tên',
+                        showAll: true,
                         onChanged: (String member) {
                           _filterByName = member;
                           _bloc.add(LoadBooking(

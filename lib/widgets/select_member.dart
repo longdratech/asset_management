@@ -4,15 +4,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/ members/member_bloc.dart';
 import '../blocs/ members/member_event.dart';
 import '../blocs/ members/member_state.dart';
-import '../models/member.dart';
 
 class SelectMember extends StatefulWidget {
   final String hint;
+  final bool showAll;
   final ValueChanged<String> onChanged;
 
   const SelectMember({
     Key? key,
     required this.hint,
+    required this.showAll,
     required this.onChanged,
   }) : super(key: key);
 
@@ -21,7 +22,7 @@ class SelectMember extends StatefulWidget {
 }
 
 class _SelectMemberState extends State<SelectMember> {
-  String dropdownValue = "All";
+  String? dropdownValue;
   late MemberBloc _bloc;
 
   @override
@@ -43,8 +44,9 @@ class _SelectMemberState extends State<SelectMember> {
       builder: (context, state) {
         if (state is MemberLoaded) {
           final members = state.members.map((e) => e.name).toList();
-          members.add("All");
-
+          if (widget.showAll) {
+            members.add("All");
+          }
           return DropdownButton<String>(
             value: dropdownValue,
             hint: Text(widget.hint),
