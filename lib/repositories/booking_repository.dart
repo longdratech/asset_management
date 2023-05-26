@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../blocs/booking/booking_event.dart';
-import '../enums/filter_booking.dart';
 import '../models/booking.dart';
 import '../models/json_map.dart';
 import 'firestore_repository.dart';
@@ -31,16 +30,15 @@ class BookingRepository {
         .where('createdAt', isLessThanOrEqualTo: end);
   }
 
-  Stream<List<DocumentSnapshot>> selectAll(LoadBooking query) {
-    return collectionByTime(query.createdAt)
-        .orderBy(
-          "createdAt",
-          descending: true,
-        )
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs;
-    });
+  Stream<List<DocumentSnapshot>> selectAll(LoadBooking loadBooking) {
+    var query = collectionByTime(loadBooking.createdAt).orderBy(
+      "createdAt",
+      descending: true,
+    );
+    if (loadBooking.member != null && loadBooking.member != "") {
+      query = query.where("employee", isEqualTo: loadBooking.member);
+    }
+    return query.snapshots().map((snapshot) => snapshot.docs);
   }
 
   DocumentReference<JsonMap> reference(String ref) {

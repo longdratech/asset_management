@@ -11,6 +11,8 @@ import 'package:assets_management/models/filter.dart';
 import 'package:assets_management/screens/booking/choose_member.dart';
 import 'package:assets_management/widgets/asset_item.dart';
 import 'package:assets_management/widgets/booking_item.dart';
+import 'package:assets_management/widgets/newest_filter.dart';
+import 'package:assets_management/widgets/select_member.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -34,6 +36,7 @@ class MyBooking extends StatefulWidget {
 class _MyBookingState extends State<MyBooking> {
   late TextEditingController _controller;
   Filter _filterItem = bookingFilters[0];
+  String _filterByName = '';
 
   final repository = FirestoreRepository();
   final _bloc = BookingBloc();
@@ -89,6 +92,7 @@ class _MyBookingState extends State<MyBooking> {
                     _bloc.add(LoadBooking(
                       _current(index),
                       filter: _filterItem.value,
+                      member: _filterByName,
                     ));
                   },
                   tabs: datetime.map(
@@ -105,32 +109,29 @@ class _MyBookingState extends State<MyBooking> {
               appBar: AppBar(
                 title: Align(
                   alignment: Alignment.topRight,
-                  child: DropdownButton<Filter>(
-                    value: _filterItem,
-                    icon: const Icon(Icons.arrow_downward),
-                    elevation: 16,
-                    style: const TextStyle(color: Colors.deepPurple),
-                    underline: Container(
-                      height: 2,
-                      color: Colors.deepPurpleAccent,
-                    ),
-                    onChanged: (Filter? value) {
-                      // This is called when the user selects an item.
-                      setState(() {
-                        _filterItem = value!;
-                      });
-                      _bloc.add(LoadBooking(
-                        _current(_selectedIndex),
-                        filter: _filterItem.value,
-                      ));
-                    },
-                    items: bookingFilters
-                        .map<DropdownMenuItem<Filter>>((Filter filter) {
-                      return DropdownMenuItem<Filter>(
-                        value: filter,
-                        child: Text(filter.label),
-                      );
-                    }).toList(),
+                  child: Wrap(
+                    direction: Axis.horizontal,
+                    runSpacing: 20,
+                    spacing: 20,
+                    children: [
+                      SelectMember(
+                        hint: 'Lọc theo tên',
+                        onChanged: (String member) {
+                          _filterByName = member;
+                          _bloc.add(LoadBooking(
+                            _current(_selectedIndex),
+                            filter: _filterItem.value,
+                            member: _filterByName,
+                          ));
+                        },
+                      ),
+                      NewestFilter(onChanged: (value) {
+                        _bloc.add(LoadBooking(
+                          _current(_selectedIndex),
+                          filter: _filterItem.value,
+                        ));
+                      }),
+                    ],
                   ),
                 ),
               ),
@@ -435,18 +436,19 @@ class _MyBookingState extends State<MyBooking> {
             booking.endedAt == null
                 ? TextButton(
                     onPressed: () {
-                      _bloc.onTransferTo(TransferTo(
+                      _bloc
+                          .onTransferTo(TransferTo(
                         booking.id,
                         booking.assetRef,
                         booking.employee,
                         DateTime.now(),
-                      )).then((value) {
+                      ))
+                          .then((value) {
                         Navigator.pop(context);
                       }).catchError((err) {
                         ScaffoldMessenger.of(context)
                             .showSnackBar(SnackBar(content: Text(err)));
                       });
-
                     },
                     child: const Text('Next day'),
                   )

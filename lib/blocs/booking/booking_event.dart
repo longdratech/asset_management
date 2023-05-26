@@ -19,11 +19,12 @@ class LoadBookingById extends BookingEvent {
 }
 
 class LoadBooking extends BookingEvent {
-  const LoadBooking(this.createdAt, {this.asset, this.filter});
+  const LoadBooking(this.createdAt, {this.asset, this.filter, this.member});
 
   final DateTime createdAt;
   final Asset? asset;
   final BookingOrderBy? filter;
+  final String? member;
 }
 
 class LoadBookingCompleted extends BookingEvent {
