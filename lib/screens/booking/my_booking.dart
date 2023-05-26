@@ -32,7 +32,6 @@ class MyBooking extends StatefulWidget {
 }
 
 class _MyBookingState extends State<MyBooking> {
-  // FirebaseFirestore firestore = FirebaseFirestore.instance;
   late TextEditingController _controller;
   Filter _filterItem = bookingFilters[0];
 

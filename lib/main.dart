@@ -21,8 +21,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final providers = [EmailAuthProvider()];
-
     return MaterialApp(
       title: 'AppLocalizations.of(context).helloWorld',
       theme: ThemeData(
@@ -30,29 +28,6 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: FirebaseAuth.instance.currentUser == null ? signIn : home,
       onGenerateRoute: Routes.generateRoute,
-      routes: {
-        '/sign-in': (context) {
-          return SignInScreen(
-            providers: providers,
-            actions: [
-              AuthStateChangeAction<SignedIn>((context, state) {
-                Navigator.pushReplacementNamed(context, home);
-              }),
-            ],
-          );
-        },
-        '/profile': (context) {
-          return ProfileScreen(
-            providers: providers,
-            actions: [
-              SignedOutAction((context) {
-                Navigator.pushReplacementNamed(context, '/sign-in');
-              }),
-            ],
-          );
-
-        },
-      },
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
@@ -87,7 +62,14 @@ class _MyHomePageState extends State<MyHomePage> {
   static final List<Widget> _screens = <Widget>[
     const MyBooking(),
     const AssetScreen(),
-    const ProfileScreen(),
+    ProfileScreen(
+      providers: [EmailAuthProvider()],
+      actions: [
+        SignedOutAction((context) {
+          Navigator.pushReplacementNamed(context, signIn);
+        }),
+      ],
+    )
   ];
 
   void _onItemTapped(int index) {
