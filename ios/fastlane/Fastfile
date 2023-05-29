@@ -4,6 +4,8 @@ firebase_app_id = "1:518829323508:ios:529ec8854ca907b6951aa1"
 app_testers = [
   "tranlong.kma@gmail.com",
   "tranhuulong131@gmail.com",
+  "honggamqn1998@gmail.com",
+  "nnhunng@gmail.com"
 ]
 tester_udids_file = "tester_udids.txt"
 #
