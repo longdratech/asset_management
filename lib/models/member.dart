@@ -6,13 +6,12 @@ import 'json_map.dart';
 class Member {
   final String? id;
   final String name;
-  late bool? select;
 
-  Member({required this.name, this.id, this.select});
+  Member({required this.name, this.id});
 
   factory Member.fromFirestore(DocumentSnapshot snapshot) {
     final data = snapshot.data() as JsonMap;
-    return Member(id: snapshot.id, name: data['name'], select: false);
+    return Member(id: snapshot.id, name: data['name']);
   }
 
   JsonMap toFirestore() {

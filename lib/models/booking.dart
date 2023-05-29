@@ -7,6 +7,7 @@ class Booking {
   final DateTime createdAt;
   final String employee;
   final DateTime? endedAt;
+  final String? note;
 
   Booking({
     required this.id,
@@ -14,6 +15,7 @@ class Booking {
     required this.createdAt,
     required this.employee,
     this.endedAt,
+    this.note,
   });
 
   factory Booking.fromDocumentSnapshot(DocumentSnapshot snapshot) {
@@ -26,6 +28,7 @@ class Booking {
       endedAt: data['endedAt'] != null
           ? (data['endedAt'] as Timestamp).toDate()
           : null,
+      note: data['note'],
     );
   }
 
@@ -34,6 +37,7 @@ class Booking {
       'createdAt': createdAt,
       'employee': employee,
       'endedAt': endedAt != null ? Timestamp.fromDate(endedAt!) : null,
+      'note': note,
     };
   }
 }

@@ -45,11 +45,13 @@ class ReqBooking extends BookingEvent {
     required this.assetRef,
     required this.name,
     this.createdAt,
+    this.note,
   });
 
   final DateTime? createdAt;
   final String assetRef;
   final String name;
+  final String? note;
 }
 
 class ReturnBooking extends BookingEvent {

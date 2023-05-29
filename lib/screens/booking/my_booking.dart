@@ -1,3 +1,4 @@
+import 'package:assets_management/blocs/%20members/member_bloc.dart';
 import 'package:assets_management/blocs/asset/asset_bloc.dart';
 import 'package:assets_management/blocs/asset/asset_event.dart';
 import 'package:assets_management/blocs/asset/asset_state.dart';
@@ -6,11 +7,12 @@ import 'package:assets_management/blocs/booking/booking_state.dart';
 import 'package:assets_management/constants/routes.dart';
 import 'package:assets_management/models/booking.dart';
 import 'package:assets_management/models/filter.dart';
-import 'package:assets_management/screens/booking/choose_member.dart';
+import 'package:assets_management/screens/booking/booking_request.dart';
 import 'package:assets_management/widgets/asset_item.dart';
 import 'package:assets_management/widgets/booking_item.dart';
 import 'package:assets_management/widgets/newest_filter.dart';
 import 'package:assets_management/widgets/select_member.dart';
+import 'package:firebase_auth/firebase_auth.dart' show User;
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -33,11 +35,14 @@ class MyBooking extends StatefulWidget {
 
 class _MyBookingState extends State<MyBooking> {
   late TextEditingController _controller;
-  Filter _filterItem = bookingFilters[0];
+  final Filter _filterItem = bookingFilters[0];
   String _filterByName = '';
+  User? _user;
+  bool _isAdmin = false;
 
   final repository = FirestoreRepository();
   final _bloc = BookingBloc();
+  final _memberBloc = MemberBloc();
   final _assetBloc = AssetBloc();
 
   final datetime = List.generate(10, (index) {
@@ -56,6 +61,11 @@ class _MyBookingState extends State<MyBooking> {
     _selectedIndex =
         datetime.indexOf(DateFormat('dd/MM/yyyy').format(DateTime.now()));
     _controller = TextEditingController();
+
+    _user = _memberBloc.getUser();
+
+    /// FIXME: fix hard code
+    _isAdmin = _user?.email == "1tranhuulong131@gmail.com";
   }
 
   @override
@@ -162,7 +172,7 @@ class _MyBookingState extends State<MyBooking> {
                                   top: 20,
                                   right: 20,
                                 ),
-                                child: ItemBooking(
+                                child: BookingItem(
                                   booking: data[i],
                                   onChangedMember: (member) {
                                     _bloc.onTransferTo(TransferTo(
@@ -324,27 +334,28 @@ class _MyBookingState extends State<MyBooking> {
                 filter: _filterItem.value,
               ),
             )
-                .then((bookings) {
+                .then((bookings) async {
               final noBookingInToday = bookings.isEmpty;
 
               if (noBookingInToday) {
-                showDialog(
+                final BookingRequestArgs res = await showDialog(
                   context: context,
                   builder: (BuildContext context) {
-                    return const ChooseMember();
+                    final initValue = !_isAdmin ? _user?.email : null;
+                    return BookingRequest(initValue: initValue);
                   },
-                ).then((member) {
-                  _bloc
-                      .onReq(ReqBooking(
-                    name: member,
-                    assetRef: !kReleaseMode
-                        ? 'assets-dev/${asset.id}'
-                        : 'assets/${asset.id}',
-                  ))
-                      .catchError((err) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(err)));
-                  });
+                );
+                _bloc
+                    .onReq(ReqBooking(
+                  name: res.member,
+                  assetRef: !kReleaseMode
+                      ? 'assets-dev/${asset.id}'
+                      : 'assets/${asset.id}',
+                  note: res.note
+                ))
+                    .catchError((err) {
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text(err)));
                 });
               } else {
                 _showConfirmed(bookings[0]);
@@ -370,15 +381,17 @@ class _MyBookingState extends State<MyBooking> {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return const ChooseMember();
+                final initValue = !_isAdmin ? _user?.email : null;
+                return BookingRequest(initValue: initValue);
               },
-            ).then((member) {
+            ).then((res) {
               _bloc
                   .onReq(ReqBooking(
-                name: member,
+                name: res.member,
                 assetRef: !kReleaseMode
                     ? 'assets-dev/${(asset as Asset).id}'
                     : 'assets/${(asset as Asset).id}',
+                note: res.note
               ))
                   .catchError((err) {
                 ScaffoldMessenger.of(context)

@@ -73,7 +73,8 @@ class BookingRepository {
         "asset": reqBooking.assetRef,
         "createdAt": reqBooking.createdAt ?? Timestamp.now(),
         "employee": reqBooking.name,
-        "endedAt": null
+        "endedAt": null,
+        "note": reqBooking.note,
       });
 
       return Booking.fromDocumentSnapshot(await a.get());

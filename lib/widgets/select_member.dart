@@ -22,7 +22,7 @@ class SelectMember extends StatefulWidget {
 }
 
 class _SelectMemberState extends State<SelectMember> {
-  String? dropdownValue;
+  String? _dropdownValue;
   late MemberBloc _bloc;
 
   @override
@@ -48,7 +48,7 @@ class _SelectMemberState extends State<SelectMember> {
             members.add("All");
           }
           return DropdownButton<String>(
-            value: dropdownValue,
+            value: _dropdownValue,
             hint: Text(widget.hint),
             icon: const Icon(Icons.arrow_downward),
             elevation: 16,
@@ -60,7 +60,7 @@ class _SelectMemberState extends State<SelectMember> {
             onChanged: (String? value) {
               if (value != null) {
                 setState(() {
-                  dropdownValue = value;
+                  _dropdownValue = value;
                 });
 
                 widget.onChanged(value == "All" ? '' : value);

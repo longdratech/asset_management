@@ -10,6 +10,8 @@ abstract class MemberEvent extends Equatable {
 
 class LoadMember extends MemberEvent {}
 
+class LoadCurrentUser extends MemberEvent {}
+
 class AddMember extends MemberEvent {
   final String name;
 

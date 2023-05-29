@@ -4,15 +4,15 @@ import 'package:intl/intl.dart';
 import '../blocs/asset/asset_bloc.dart';
 import '../blocs/asset/asset_event.dart';
 import '../models/booking.dart';
-import '../screens/booking/choose_member.dart';
+import '../screens/booking/booking_request.dart';
 
-class ItemBooking extends StatelessWidget {
+class BookingItem extends StatelessWidget {
   final _assetBloc = AssetBloc();
 
   final Booking booking;
   final ValueChanged<String> onChangedMember;
 
-  ItemBooking({Key? key, required this.booking, required this.onChangedMember})
+  BookingItem({Key? key, required this.booking, required this.onChangedMember})
       : super(key: key);
 
   @override
@@ -81,7 +81,7 @@ class ItemBooking extends StatelessWidget {
                               final member = await showDialog(
                                 context: context,
                                 builder: (context) {
-                                  return const ChooseMember();
+                                  return const BookingRequest();
                                 },
                               );
 
@@ -98,6 +98,10 @@ class ItemBooking extends StatelessWidget {
                       : Container()
                 ],
               ),
+              Text(
+                booking.note ?? "",
+                style: const TextStyle(color: Colors.blueAccent),
+              )
             ],
           ),
         ),
