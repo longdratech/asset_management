@@ -1,0 +1,4 @@
+Device ID	Device Name	Device Platform
+00008020-001d359911e8003a	tranlong.kma@gmail.com - iPhone XR	ios
+00008030-001834ae01e8802e	nnhunng@gmail.com - iPhone 11	ios
+00008020-001a29d6213a002e	honggamqn1998@gmail.com - iPhone XS Max	ios

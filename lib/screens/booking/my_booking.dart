@@ -319,15 +319,15 @@ class _MyBookingState extends State<MyBooking> {
           final noBookingInToday = bookings.isEmpty;
 
           if (noBookingInToday) {
-            final BookingRequestArgs res = !(fast && _isAdmin)
-                ? await showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      final initValue = !_isAdmin ? _user?.email : null;
-                      return BookingRequest(initValue: initValue);
-                    },
-                  )
-                : BookingRequestArgs(_user?.email ?? "N/A", "");
+            final BookingRequestArgs res = fast && !_isAdmin
+                ? BookingRequestArgs(_user?.email ?? "N/A", "")
+                :  await showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                final initValue = !_isAdmin ? _user?.email : null;
+                return BookingRequest(initValue: initValue);
+              },
+            );
 
             final req = ReqBooking(
               name: res.member,

@@ -48,10 +48,9 @@ lane :distribute do
         app: firebase_app_id,
         release_notes: "
          Features:
-          - Add booking/asset from web
-          - Add signIn/Profile screen
-          - Add filter booking by member
-          - Add role/permission
+          - add note booking
+          - fast create booking
+          - auto add owner booking
         ",
         testers: app_testers.join(","),
     )
