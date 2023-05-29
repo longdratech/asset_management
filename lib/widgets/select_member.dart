@@ -43,7 +43,7 @@ class _SelectMemberState extends State<SelectMember> {
       bloc: _bloc..add(LoadMember()),
       builder: (context, state) {
         if (state is MemberLoaded) {
-          final members = state.members.map((e) => e.name).toList();
+          final members = state.members.map((e) => e.email).toList();
           if (widget.showAll) {
             members.add("All");
           }

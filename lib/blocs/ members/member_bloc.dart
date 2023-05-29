@@ -33,7 +33,10 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
     await emit.forEach<User?>(
       _repository.currentUser(),
       onData: (data) {
-        members.add(Member(name: data?.email ?? "N/A"));
+        members.add(Member(
+          name: data?.displayName ?? (data?.email ?? "N/A"),
+          email: data?.email ?? "N/A",
+        ));
         return MemberLoaded(members);
       },
       onError: (error, stackTrace) {
@@ -46,6 +49,4 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
   User? getUser() {
     return _repository.getUser();
   }
-
-
 }

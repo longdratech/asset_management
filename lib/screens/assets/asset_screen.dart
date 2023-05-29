@@ -205,15 +205,21 @@ class _AssetScreenState extends State<AssetScreen> {
   }
 
   _process(BuildContext context, String assetCode) {
-    bloc.getAssets(LoadAsset(assetCode: assetCode)).then((asset) {
-      if (asset == null) {
+    bloc.getAssets(LoadAsset(assetCode: assetCode)).then((List<Asset>? assets) {
+      if (assets == null) {
         Navigator.of(context).pushNamed(
           addAsset,
           arguments: AddAssetArguments(Asset(assetCode: assetCode)),
         );
       } else {
+        final asset = assets[0];
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tài sản đã tồn tại!')),
+          const SnackBar(content: Text('Tài sản đã tồn tại! Vui lòng chỉnh sửa')),
+        );
+        Navigator.of(context).pushNamed(
+          addAsset,
+          arguments: AddAssetArguments(asset),
         );
       }
     });

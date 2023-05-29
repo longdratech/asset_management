@@ -65,7 +65,7 @@ class _MyBookingState extends State<MyBooking> {
     _user = _memberBloc.getUser();
 
     /// FIXME: fix hard code
-    _isAdmin = _user?.email == "1tranhuulong131@gmail.com";
+    _isAdmin = _user?.email == "nnhunng@gmail.com";
   }
 
   @override
@@ -239,7 +239,7 @@ class _MyBookingState extends State<MyBooking> {
                               onPressed: () {
                                 final assetCode = _controller.text;
                                 if (assetCode.isNotEmpty) {
-                                  _process(_controller.text);
+                                  _process(_controller.text, false);
                                 }
                                 _controller.clear();
                                 Navigator.of(context).pop();
@@ -254,21 +254,44 @@ class _MyBookingState extends State<MyBooking> {
                 ),
               ),
               if (!kIsWeb)
-                FloatingActionButton(
-                  heroTag: "camera1",
-                  onPressed: () {
-                    FlutterBarcodeScanner.scanBarcode(
-                      '#ff6666',
-                      'Cancel',
-                      true,
-                      ScanMode.QR,
-                    ).then((value) {
-                      if (value != "-1") {
-                        _process(value);
-                      }
-                    });
-                  },
-                  child: const Icon(Icons.camera_alt_outlined),
+                Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: FloatingActionButton(
+                        heroTag: "camera1",
+                        onPressed: () {
+                          FlutterBarcodeScanner.scanBarcode(
+                            '#ff6666',
+                            'Cancel',
+                            true,
+                            ScanMode.QR,
+                          ).then((value) {
+                            if (value != "-1") {
+                              _process(value, false);
+                            }
+                          });
+                        },
+                        child: const Icon(Icons.camera_alt_outlined),
+                      ),
+                    ),
+                    FloatingActionButton(
+                      heroTag: "camera12",
+                      onPressed: () {
+                        FlutterBarcodeScanner.scanBarcode(
+                          '#ff6666',
+                          'Cancel',
+                          true,
+                          ScanMode.QR,
+                        ).then((value) {
+                          if (value != "-1") {
+                            _process(value, true);
+                          }
+                        });
+                      },
+                      child: const Icon(Icons.fast_forward_outlined),
+                    ),
+                  ],
                 ),
             ],
           ),
@@ -277,92 +300,88 @@ class _MyBookingState extends State<MyBooking> {
     );
   }
 
-  _process(String assetCode) {
-    _assetBloc
-        .getAssets(
-      LoadAsset(
-        assetCode: assetCode.toUpperCase(),
-      ),
-    )
-        .catchError((error) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error)));
+  _process(String assetCode, bool fast) {
+    final load = LoadAsset(
+      assetCode: assetCode.toUpperCase(),
+    );
+    _assetBloc.getAssets(load).catchError((error) {
+      final snackBar = SnackBar(content: Text(error));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }).then((assets) {
       if (assets != null) {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text('Chọn asset'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: assets.length,
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context, assets[index]);
-                      },
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(15),
-                          child: AssetItem(asset: assets[index]),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            );
-          },
-        ).then((asset) {
-          if (asset != null) {
-            _bloc
-                .getBooking(
-              LoadBooking(
-                _current(_selectedIndex),
-                asset: asset,
-                filter: _filterItem.value,
-              ),
-            )
-                .then((bookings) async {
-              final noBookingInToday = bookings.isEmpty;
+        final asset = assets[0];
+        final load = LoadBooking(
+          _current(_selectedIndex),
+          asset: asset,
+          filter: _filterItem.value,
+        );
+        _bloc.getBooking(load).then((bookings) async {
+          final noBookingInToday = bookings.isEmpty;
 
-              if (noBookingInToday) {
-                final BookingRequestArgs res = await showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    final initValue = !_isAdmin ? _user?.email : null;
-                    return BookingRequest(initValue: initValue);
-                  },
-                );
-                _bloc
-                    .onReq(ReqBooking(
-                  name: res.member,
-                  assetRef: !kReleaseMode
-                      ? 'assets-dev/${asset.id}'
-                      : 'assets/${asset.id}',
-                  note: res.note
-                ))
-                    .catchError((err) {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text(err)));
-                });
-              } else {
-                _showConfirmed(bookings[0]);
-              }
+          if (noBookingInToday) {
+            final BookingRequestArgs res = !(fast && _isAdmin)
+                ? await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      final initValue = !_isAdmin ? _user?.email : null;
+                      return BookingRequest(initValue: initValue);
+                    },
+                  )
+                : BookingRequestArgs(_user?.email ?? "N/A", "");
+
+            final req = ReqBooking(
+              name: res.member,
+              assetRef: !kReleaseMode
+                  ? 'assets-dev/${asset.id}'
+                  : 'assets/${asset.id}',
+              note: res.note,
+            );
+            _bloc.onReq(req).catchError((err) {
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(err)));
             });
+          } else {
+            _showConfirmed(bookings[0]);
           }
         });
+
+        /// FIXME: hiển thị list assets để chọn
+        // showDialog(
+        //   context: context,
+        //   builder: (context) {
+        //     return AlertDialog(
+        //       title: const Text('Chọn asset'),
+        //       content: SizedBox(
+        //         width: double.maxFinite,
+        //         child: ListView.builder(
+        //           shrinkWrap: true,
+        //           itemCount: assets.length,
+        //           itemBuilder: (context, index) {
+        //             return GestureDetector(
+        //               onTap: () {
+        //                 Navigator.pop(context, assets[index]);
+        //               },
+        //               child: Card(
+        //                 child: Padding(
+        //                   padding: const EdgeInsets.all(15),
+        //                   child: AssetItem(asset: assets[index]),
+        //                 ),
+        //               ),
+        //             );
+        //           },
+        //         ),
+        //       ),
+        //       actions: <Widget>[
+        //         TextButton(
+        //           child: const Text('Cancel'),
+        //           onPressed: () {
+        //             Navigator.of(context).pop();
+        //           },
+        //         ),
+        //       ],
+        //     );
+        //   },
+        // )
       } else {
         const snackBar = SnackBar(
           content: Text(
@@ -387,12 +406,11 @@ class _MyBookingState extends State<MyBooking> {
             ).then((res) {
               _bloc
                   .onReq(ReqBooking(
-                name: res.member,
-                assetRef: !kReleaseMode
-                    ? 'assets-dev/${(asset as Asset).id}'
-                    : 'assets/${(asset as Asset).id}',
-                note: res.note
-              ))
+                      name: res.member,
+                      assetRef: !kReleaseMode
+                          ? 'assets-dev/${(asset as Asset).id}'
+                          : 'assets/${(asset as Asset).id}',
+                      note: res.note))
                   .catchError((err) {
                 ScaffoldMessenger.of(context)
                     .showSnackBar(SnackBar(content: Text(err)));
