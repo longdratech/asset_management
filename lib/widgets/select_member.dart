@@ -22,7 +22,7 @@ class SelectMember extends StatefulWidget {
 }
 
 class _SelectMemberState extends State<SelectMember> {
-  String? _dropdownValue;
+  String? _dropdownValue = "tester1@gmail.com";
   late MemberBloc _bloc;
 
   @override

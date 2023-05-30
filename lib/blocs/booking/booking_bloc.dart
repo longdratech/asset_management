@@ -72,6 +72,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
+  Future<void> onUpdate(Booking booking) async {
+    try {
+      return await _repository.updateOne(booking);
+    } catch (e) {
+      throw (e as FirebaseException).message ?? "Đã có lỗi xảy ra";
+    }
+  }
+
   Future<void> onReturn(ReturnBooking event) async {
     try {
       await _repository

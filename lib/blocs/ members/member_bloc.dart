@@ -6,6 +6,7 @@ import 'package:assets_management/models/member.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../enums/role.dart';
 import '../../repositories/member_repository.dart';
 
 class MemberBloc extends Bloc<MemberEvent, MemberState> {
@@ -46,7 +47,11 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
     );
   }
 
-  User? getUser() {
-    return _repository.getUser();
+  Future<Member> getUser() async {
+    try {
+      return await _repository.getUser();
+    } catch (e) {
+      rethrow;
+    }
   }
 }

@@ -40,7 +40,11 @@ class MemberRepository {
     return _fireAuth.currentUser();
   }
 
-  User? getUser() {
-    return _fireAuth.getUser();
+  Future<Member> getUser() async {
+    final email = _fireAuth.getUser()?.email;
+    final querySnapshot =
+        await collection().where('email', isEqualTo: email).get();
+    final data = querySnapshot.docs.first;
+    return Member.fromFirestore(data);
   }
 }

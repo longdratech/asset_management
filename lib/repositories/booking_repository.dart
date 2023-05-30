@@ -82,4 +82,15 @@ class BookingRepository {
       rethrow;
     }
   }
+
+  Future<void> updateOne(Booking booking) async {
+    try {
+      return await _firestore
+          .collection(path)
+          .doc(booking.id)
+          .update(booking.toJson());
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

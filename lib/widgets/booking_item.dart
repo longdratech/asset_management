@@ -6,14 +6,32 @@ import '../blocs/asset/asset_event.dart';
 import '../models/booking.dart';
 import '../screens/booking/booking_request.dart';
 
-class BookingItem extends StatelessWidget {
-  final _assetBloc = AssetBloc();
-
+class BookingItem extends StatefulWidget {
   final Booking booking;
   final ValueChanged<String> onChangedMember;
+  final ValueChanged<String> onChangedNote;
 
-  BookingItem({Key? key, required this.booking, required this.onChangedMember})
+  const BookingItem(
+      {Key? key,
+      required this.booking,
+      required this.onChangedMember,
+      required this.onChangedNote})
       : super(key: key);
+
+  @override
+  State<BookingItem> createState() => _BookingItemState();
+}
+
+class _BookingItemState extends State<BookingItem> {
+  final _assetBloc = AssetBloc();
+
+  bool _returned = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _returned = widget.booking.endedAt != null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +51,7 @@ class BookingItem extends StatelessWidget {
             children: <Widget>[
               FutureBuilder(
                 future: _assetBloc.getAssetById(
-                  LoadAssetById(booking.assetRef),
+                  LoadAssetById(widget.booking.assetRef),
                 ),
                 builder: (context, snapshot) {
                   final state = snapshot.connectionState;
@@ -50,7 +68,7 @@ class BookingItem extends StatelessWidget {
                   return const Text('Loading...');
                 },
               ),
-              booking.endedAt == null
+              !_returned
                   ? const Text(
                       'Đang mượn',
                       style: TextStyle(
@@ -59,21 +77,22 @@ class BookingItem extends StatelessWidget {
                       ),
                     )
                   : Text(
-                      'Đã trả (${DateFormat('dd/MM/yyyy - HH:mm').format(booking.endedAt!)})',
+                      'Đã trả (${DateFormat('dd/MM/yyyy - HH:mm').format(widget.booking.endedAt!)})',
                       style: const TextStyle(
                         color: Colors.green,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
               Text(
-                DateFormat('dd/MM/yyyy - HH:mm').format(booking.createdAt),
+                DateFormat('dd/MM/yyyy - HH:mm')
+                    .format(widget.booking.createdAt),
               ),
               Row(
                 children: [
                   Text(
-                    booking.employee,
+                    widget.booking.employee,
                   ),
-                  booking.endedAt == null
+                  !_returned
                       ? Padding(
                           padding: const EdgeInsets.only(left: 6),
                           child: GestureDetector(
@@ -81,12 +100,13 @@ class BookingItem extends StatelessWidget {
                               final member = await showDialog(
                                 context: context,
                                 builder: (context) {
-                                  return const BookingRequest();
+                                  return BookingRequest(
+                                      widget.booking.employee);
                                 },
                               );
 
                               if (member != null) {
-                                onChangedMember(member);
+                                widget.onChangedMember(member);
                               }
                             },
                             child: const Icon(
@@ -98,9 +118,60 @@ class BookingItem extends StatelessWidget {
                       : Container()
                 ],
               ),
-              Text(
-                booking.note ?? "",
-                style: const TextStyle(color: Colors.blueAccent),
+              Row(
+                children: [
+                  Text(
+                    widget.booking.note != null && widget.booking.note != ""
+                        ? widget.booking.note!
+                        : _returned
+                            ? "Không có ghi chú"
+                            : "Thêm ghi chú",
+                    style: const TextStyle(color: Colors.blueAccent),
+                  ),
+                  if (!_returned)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: GestureDetector(
+                        onTap: () async {
+                          final member = await showDialog(
+                            context: context,
+                            builder: (context) {
+                              final controller = TextEditingController();
+                              return AlertDialog(
+                                title: const Text('Ghi chú'),
+                                content: TextFormField(
+                                  controller: controller,
+                                ),
+                                actions: [
+                                  OutlinedButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('Hủy bỏ'),
+                                  ),
+                                  OutlinedButton(
+                                    onPressed: () {
+                                      widget.onChangedNote(controller.text);
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('Xác nhận'),
+                                  )
+                                ],
+                              );
+                            },
+                          );
+
+                          if (member != null) {
+                            widget.onChangedMember(member);
+                          }
+                        },
+                        child: const Icon(
+                          Icons.edit,
+                          size: 18,
+                        ),
+                      ),
+                    )
+                ],
               )
             ],
           ),

@@ -5,6 +5,7 @@ import 'package:assets_management/blocs/asset/asset_state.dart';
 import 'package:assets_management/blocs/booking/booking_event.dart';
 import 'package:assets_management/blocs/booking/booking_state.dart';
 import 'package:assets_management/constants/routes.dart';
+import 'package:assets_management/enums/role.dart';
 import 'package:assets_management/models/booking.dart';
 import 'package:assets_management/models/filter.dart';
 import 'package:assets_management/screens/booking/booking_request.dart';
@@ -12,7 +13,6 @@ import 'package:assets_management/widgets/asset_item.dart';
 import 'package:assets_management/widgets/booking_item.dart';
 import 'package:assets_management/widgets/newest_filter.dart';
 import 'package:assets_management/widgets/select_member.dart';
-import 'package:firebase_auth/firebase_auth.dart' show User;
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,6 +23,7 @@ import 'package:intl/intl.dart';
 import '../../blocs/booking/booking_bloc.dart';
 import '../../constants/bookings_filter.dart';
 import '../../models/asset.dart';
+import '../../models/member.dart';
 import '../../repositories/firestore_repository.dart';
 import '../assets/add_asset.dart';
 
@@ -36,9 +37,7 @@ class MyBooking extends StatefulWidget {
 class _MyBookingState extends State<MyBooking> {
   late TextEditingController _controller;
   final Filter _filterItem = bookingFilters[0];
-  String _filterByName = '';
-  User? _user;
-  bool _isAdmin = false;
+  String? _filterByName;
 
   final repository = FirestoreRepository();
   final _bloc = BookingBloc();
@@ -61,11 +60,6 @@ class _MyBookingState extends State<MyBooking> {
     _selectedIndex =
         datetime.indexOf(DateFormat('dd/MM/yyyy').format(DateTime.now()));
     _controller = TextEditingController();
-
-    _user = _memberBloc.getUser();
-
-    /// FIXME: fix hard code
-    _isAdmin = _user?.email == "nnhunng@gmail.com";
   }
 
   @override
@@ -79,187 +73,208 @@ class _MyBookingState extends State<MyBooking> {
     return DefaultTabController(
       initialIndex: _selectedIndex,
       length: datetime.length,
-      child: BlocProvider(
-        create: (context) => _bloc
-          ..add(LoadBooking(
-            DateTime.now(),
-            filter: _filterItem.value,
-          )),
-        child: Scaffold(
-          appBar: AppBar(
-            centerTitle: true,
-            scrolledUnderElevation: 5,
-            shadowColor: Colors.grey,
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(30),
-              child: TabBar(
-                isScrollable: true,
-                indicatorColor: Colors.white,
-                onTap: (index) {
-                  _selectedIndex = index;
-                  _bloc.add(LoadBooking(
-                    _current(index),
-                    filter: _filterItem.value,
-                    member: _filterByName,
-                  ));
-                },
-                tabs: datetime.map(
-                  (e) {
-                    return Tab(
-                      child: Text(e),
-                    );
-                  },
-                ).toList(),
-              ),
-            ),
-          ),
-          body: Scaffold(
-            appBar: AppBar(
-              title: Align(
-                alignment: Alignment.topRight,
-                child: Wrap(
-                  direction: Axis.horizontal,
-                  runSpacing: 20,
-                  spacing: 20,
-                  children: [
-                    SelectMember(
-                      hint: 'Lọc theo tên',
-                      showAll: true,
-                      onChanged: (String member) {
-                        _filterByName = member;
+      child: FutureBuilder(
+          future: _memberBloc.getUser(),
+          builder: (ctx, snapshot) {
+            final state = snapshot.connectionState;
+            if (state == ConnectionState.waiting) {
+              return const Center(child: Text('Loading...'));
+            } else if (state == ConnectionState.done) {
+              final data = snapshot.data;
+              return Scaffold(
+                appBar: AppBar(
+                  centerTitle: true,
+                  scrolledUnderElevation: 5,
+                  shadowColor: Colors.grey,
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(30),
+                    child: TabBar(
+                      isScrollable: true,
+                      indicatorColor: Colors.white,
+                      onTap: (index) {
+                        _selectedIndex = index;
                         _bloc.add(LoadBooking(
-                          _current(_selectedIndex),
+                          _current(index),
                           filter: _filterItem.value,
-                          member: _filterByName,
+                          member: _filterByName ?? data?.email,
                         ));
                       },
+                      tabs: datetime.map(
+                        (e) {
+                          return Tab(
+                            child: Text(e),
+                          );
+                        },
+                      ).toList(),
                     ),
-                    NewestFilter(onChanged: (value) {
-                      _bloc.add(LoadBooking(
-                        _current(_selectedIndex),
-                        filter: _filterItem.value,
-                      ));
-                    }),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            body: BlocBuilder<BookingBloc, BookingState>(
-              builder: (context, state) {
-                if (state is BookingLoading) {
-                  return const Center(child: Text('Loading...'));
-                } else if (state is BookingFailure) {
-                  return Center(child: Text(state.error));
-                } else if (state is BookingLoaded) {
-                  final data = state.booking;
-                  if (data.isEmpty) {
-                    return const Center(child: Text('No data!'));
-                  } else {
-                    return ListView.builder(
-                      itemCount: data.length,
-                      itemBuilder: (BuildContext context, int i) {
-                        return GestureDetector(
-                          onTap: () {
-                            _showConfirmed(data[i]);
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.only(
-                                  left: 20,
-                                  top: 20,
-                                  right: 20,
-                                ),
-                                child: BookingItem(
-                                  booking: data[i],
-                                  onChangedMember: (member) {
-                                    _bloc.onTransferTo(TransferTo(
-                                      data[i].id,
-                                      data[i].assetRef,
-                                      member,
-                                      DateTime.now(),
-                                    ));
-                                  },
-                                ),
-                              ),
-                              i + 1 != data.length
-                                  ? const Divider(height: 0.5)
-                                  : Container(),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  }
-                } else {
-                  return const Center(
-                    child: Text(
-                      'Đã có lỗi xảy ra!',
-                    ),
-                  );
-                }
-              },
-            ),
-          ),
-          floatingActionButton: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: FloatingActionButton(
-                  heroTag: "text1",
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text('Nhập mã tài sản'),
-                          content: TextField(
-                            controller: _controller,
-                          ),
-                          actions: <Widget>[
-                            TextButton(
-                              style: TextButton.styleFrom(
-                                textStyle:
-                                    Theme.of(context).textTheme.labelLarge,
-                              ),
-                              child: const Text('Cancel'),
-                              onPressed: () {
-                                Navigator.of(context).pop();
+                body: Scaffold(
+                  appBar: AppBar(
+                    title: Align(
+                      alignment: Alignment.topRight,
+                      child: Wrap(
+                        direction: Axis.horizontal,
+                        runSpacing: 20,
+                        spacing: 20,
+                        children: [
+                          if (data?.role == Role.admin)
+                            SelectMember(
+                              hint: 'Lọc theo tên',
+                              showAll: true,
+                              onChanged: (String member) {
+                                _filterByName = member;
+                                _bloc.add(
+                                  LoadBooking(
+                                    _current(_selectedIndex),
+                                    filter: _filterItem.value,
+                                    member: _filterByName ?? data?.email,
+                                  ),
+                                );
                               },
                             ),
-                            TextButton(
-                              style: TextButton.styleFrom(
-                                textStyle:
-                                    Theme.of(context).textTheme.labelLarge,
+                          NewestFilter(onChanged: (value) {
+                            _bloc.add(
+                              LoadBooking(
+                                _current(_selectedIndex),
+                                filter: _filterItem.value,
+                                member: _filterByName ?? data?.email,
                               ),
-                              child: const Text('Xác nhận'),
-                              onPressed: () {
-                                final assetCode = _controller.text;
-                                if (assetCode.isNotEmpty) {
-                                  _process(_controller.text, false);
-                                }
-                                _controller.clear();
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          ],
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ),
+                  body: BlocBuilder<BookingBloc, BookingState>(
+                    bloc: _bloc
+                      ..add(LoadBooking(DateTime.now(),
+                          filter: _filterItem.value,
+                          member: _filterByName ?? data?.email)),
+                    builder: (context, state) {
+                      if (state is BookingLoading) {
+                        return const Center(child: Text('Loading...'));
+                      } else if (state is BookingFailure) {
+                        return Center(child: Text(state.error));
+                      } else if (state is BookingLoaded) {
+                        final data = state.booking;
+                        if (data.isEmpty) {
+                          return const Center(child: Text('No data!'));
+                        } else {
+                          return ListView.builder(
+                            itemCount: data.length,
+                            itemBuilder: (BuildContext context, int i) {
+                              return GestureDetector(
+                                onTap: () {
+                                  _showConfirmed(data[i]);
+                                },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.only(
+                                        left: 20,
+                                        top: 20,
+                                        right: 20,
+                                      ),
+                                      child: BookingItem(
+                                        booking: data[i],
+                                        onChangedMember: (member) {
+                                          _bloc.onTransferTo(TransferTo(
+                                            data[i].id,
+                                            data[i].assetRef,
+                                            member,
+                                            DateTime.now(),
+                                          ));
+                                        },
+                                        onChangedNote: (note) {
+                                          _bloc.onUpdate(Booking(
+                                            id: data[i].id,
+                                            assetRef: data[i].assetRef,
+                                            createdAt: data[i].createdAt,
+                                            employee: data[i].employee,
+                                            note: note,
+                                          ));
+                                        },
+                                      ),
+                                    ),
+                                    i + 1 != data.length
+                                        ? const Divider(height: 0.5)
+                                        : Container(),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        }
+                      } else {
+                        return const Center(
+                          child: Text(
+                            'Đã có lỗi xảy ra!',
+                          ),
                         );
-                      },
-                    );
-                  },
-                  child: const Icon(kIsWeb ? Icons.add : Icons.text_fields),
+                      }
+                    },
+                  ),
                 ),
-              ),
-              if (!kIsWeb)
-                Column(
+                floatingActionButton: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: FloatingActionButton(
-                        heroTag: "camera1",
+                        heroTag: "text1",
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Nhập mã tài sản'),
+                                content: TextField(
+                                  controller: _controller,
+                                ),
+                                actions: <Widget>[
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                      textStyle: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge,
+                                    ),
+                                    child: const Text('Cancel'),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                      textStyle: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge,
+                                    ),
+                                    child: const Text('Xác nhận'),
+                                    onPressed: () {
+                                      final assetCode = _controller.text;
+                                      if (assetCode.isNotEmpty) {
+                                        final assetCode = _controller.text;
+                                        _process(assetCode, data!);
+                                      }
+                                      _controller.clear();
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        child:
+                            const Icon(kIsWeb ? Icons.add : Icons.text_fields),
+                      ),
+                    ),
+                    if (!kIsWeb)
+                      FloatingActionButton(
+                        heroTag: "camera12",
                         onPressed: () {
                           FlutterBarcodeScanner.scanBarcode(
                             '#ff6666',
@@ -268,39 +283,22 @@ class _MyBookingState extends State<MyBooking> {
                             ScanMode.QR,
                           ).then((value) {
                             if (value != "-1") {
-                              _process(value, false);
+                              _process(value, data!);
                             }
                           });
                         },
-                        child: const Icon(Icons.camera_alt_outlined),
+                        child: const Icon(Icons.camera),
                       ),
-                    ),
-                    FloatingActionButton(
-                      heroTag: "camera12",
-                      onPressed: () {
-                        FlutterBarcodeScanner.scanBarcode(
-                          '#ff6666',
-                          'Cancel',
-                          true,
-                          ScanMode.QR,
-                        ).then((value) {
-                          if (value != "-1") {
-                            _process(value, true);
-                          }
-                        });
-                      },
-                      child: const Icon(Icons.fast_forward_outlined),
-                    ),
                   ],
                 ),
-            ],
-          ),
-        ),
-      ),
+              );
+            }
+            return const Center(child: Text('Vui lòng đăng nhập!'));
+          }),
     );
   }
 
-  _process(String assetCode, bool fast) {
+  _process(String assetCode, Member member) {
     final load = LoadAsset(
       assetCode: assetCode.toUpperCase(),
     );
@@ -314,28 +312,29 @@ class _MyBookingState extends State<MyBooking> {
           _current(_selectedIndex),
           asset: asset,
           filter: _filterItem.value,
+          member: _filterByName ?? member.email,
         );
         _bloc.getBooking(load).then((bookings) async {
           final noBookingInToday = bookings.isEmpty;
 
           if (noBookingInToday) {
-            final BookingRequestArgs res = fast && !_isAdmin
-                ? BookingRequestArgs(_user?.email ?? "N/A", "")
-                :  await showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                final initValue = !_isAdmin ? _user?.email : null;
-                return BookingRequest(initValue: initValue);
-              },
-            );
+            final memberRes = !(member.role == Role.admin)
+                ? member.email
+                : await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return BookingRequest(
+                        member.email,
+                        isShowSelect: member.role == Role.admin,
+                      );
+                    },
+                  );
 
             final req = ReqBooking(
-              name: res.member,
-              assetRef: !kReleaseMode
-                  ? 'assets-dev/${asset.id}'
-                  : 'assets/${asset.id}',
-              note: res.note,
-            );
+                name: memberRes,
+                assetRef: !kReleaseMode
+                    ? 'assets-dev/${asset.id}'
+                    : 'assets/${asset.id}');
             _bloc.onReq(req).catchError((err) {
               ScaffoldMessenger.of(context)
                   .showSnackBar(SnackBar(content: Text(err)));
@@ -344,44 +343,6 @@ class _MyBookingState extends State<MyBooking> {
             _showConfirmed(bookings[0]);
           }
         });
-
-        /// FIXME: hiển thị list assets để chọn
-        // showDialog(
-        //   context: context,
-        //   builder: (context) {
-        //     return AlertDialog(
-        //       title: const Text('Chọn asset'),
-        //       content: SizedBox(
-        //         width: double.maxFinite,
-        //         child: ListView.builder(
-        //           shrinkWrap: true,
-        //           itemCount: assets.length,
-        //           itemBuilder: (context, index) {
-        //             return GestureDetector(
-        //               onTap: () {
-        //                 Navigator.pop(context, assets[index]);
-        //               },
-        //               child: Card(
-        //                 child: Padding(
-        //                   padding: const EdgeInsets.all(15),
-        //                   child: AssetItem(asset: assets[index]),
-        //                 ),
-        //               ),
-        //             );
-        //           },
-        //         ),
-        //       ),
-        //       actions: <Widget>[
-        //         TextButton(
-        //           child: const Text('Cancel'),
-        //           onPressed: () {
-        //             Navigator.of(context).pop();
-        //           },
-        //         ),
-        //       ],
-        //     );
-        //   },
-        // )
       } else {
         const snackBar = SnackBar(
           content: Text(
@@ -400,8 +361,10 @@ class _MyBookingState extends State<MyBooking> {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                final initValue = !_isAdmin ? _user?.email : null;
-                return BookingRequest(initValue: initValue);
+                return BookingRequest(
+                  member.email,
+                  isShowSelect: member.role == Role.admin,
+                );
               },
             ).then((res) {
               _bloc
