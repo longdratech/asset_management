@@ -9,4 +9,4 @@
 ## Release web
 - `firebase login`
 - `flutter build web`
-- `firebase deploy --project canon-assets`
+- 
